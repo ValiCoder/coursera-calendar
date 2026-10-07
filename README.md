@@ -1,2 +1,2 @@
 # coursera-calendar
-Calendar for passing 2 trimester courses
+Calendar for passing second trimester courses
