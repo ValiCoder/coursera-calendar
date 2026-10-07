@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Мой учебный календарь</title>
+  <meta name="description" content="Календарь Coursera: четыре предмета, прогресс и напоминания о занятиях.">
+  <meta name="theme-color" content="#215ee8">
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" type="module"></script>
+</head>
+<body>
+<aside class="sidebar">
+  <a class="brand" href="./" aria-label="Учебный календарь"><span class="brand-mark">c<span>·</span></span><span>Мой календарь<small>COURSERA</small></span></a>
+  <div class="side-label">УЧЕБНЫЙ ПЛАН</div>
+  <button class="nav-button active" data-view="calendar"><span>▦</span> Календарь</button>
+  <button class="nav-button" data-view="modules"><span>☷</span> Модули и прогресс</button>
+  <button class="nav-button" id="settings-open"><span>⚙</span> Настройки плана</button>
+  <div class="side-label subjects-label">ПРЕДМЕТЫ</div>
+  <div id="track-navigation"></div>
+  <div class="side-bottom"><div class="local-label"><span class="status-dot"></span> Твой личный план</div><button id="export-progress" class="nav-button">Скачать прогресс</button><p>Даты плана — UTC+5</p></div>
+</aside>
+<main>
+  <header class="topbar"><div><div class="eyebrow">ТВОЙ УЧЕБНЫЙ ПЛАН</div><h1>Календарь Coursera</h1><p id="header-description">Четыре предмета. Один понятный план.</p></div><div class="header-actions"><span id="today-label"></span><button class="button subtle" id="settings-top">Настроить план</button><div class="avatar" aria-label="Личный профиль">Я</div></div></header>
+  <div class="error-banner" id="connection-error" hidden role="alert"></div><button id="retry-load" class="button subtle" hidden>Повторить</button>
+  <section class="stats" aria-label="Прогресс плана"><div class="stat"><div class="stat-label">Пройдено модулей</div><div class="stat-value" id="stat-completed">—</div><div class="mini-progress"><span id="total-progress"></span></div></div><div class="stat"><div class="stat-label">Объём выбранного плана</div><div class="stat-value" id="stat-hours">—</div><div class="stat-note">Оценочные часы курсов</div></div><div class="stat"><div class="stat-label">План до</div><div class="stat-value" id="stat-finish">—</div><div class="stat-note" id="finish-note">25 дней минимум + 2 дня запаса</div></div><div class="stat reminder-stat"><div class="stat-label">Следующее напоминание</div><div class="stat-value" id="stat-reminder">Выключено</div><div class="stat-note" id="reminder-note">Каждые 30 минут</div></div></section>
+  <section class="current-section"><div class="section-heading"><h2>Сейчас в работе</h2><span>Модули идут по порядку</span></div><div class="current-grid" id="current-courses"></div></section>
+  <section class="workspace">
+    <div class="workspace-toolbar"><div class="tabs"><button class="tab active" data-view="calendar">Календарь</button><button class="tab" data-view="modules">Все модули</button></div><div class="calendar-controls"><button class="icon-button" id="previous-week" aria-label="Предыдущая неделя">‹</button><button class="button subtle small" id="today-button">Сегодня</button><button class="button subtle small" id="selected-module-button">К модулю</button><button class="icon-button" id="next-week" aria-label="Следующая неделя">›</button><label class="filter-label"><span class="sr-only">Предмет</span><select id="track-filter"><option value="all">Все предметы</option></select></label><label class="all-plan-label"><input type="checkbox" id="all-plan" checked> Весь план</label></div></div>
+    <div class="calendar-caption"><strong id="calendar-range"></strong><span id="calendar-caption">Нажми на модуль, чтобы посмотреть детали</span></div>
+    <div id="calendar-view"><div class="gantt-scroll" id="gantt-scroll"><div class="gantt" id="gantt"></div></div><div class="legend"><span><i class="legend-box active"></i>Текущий</span><span><i class="legend-box completed"></i>Пройден</span><span><i class="legend-box planned"></i>В плане</span><span><i class="legend-box waiting"></i>Минимальный срок</span><span><i class="legend-box reserve"></i>Запас</span><span class="legend-caption">Выходные отмечены фоном</span></div></div>
+    <div id="modules-view" hidden></div>
+    <div class="selection-panel" id="selection-panel"></div>
+  </section>
+  <section class="reminder-panel"><div class="reminder-icon">♧</div><div class="reminder-copy"><h2>Учёба по расписанию</h2><p id="notification-status">Включи уведомления, чтобы не пропускать занятия.</p><small id="helper-status">Напоминания через браузер на Windows и macOS.</small></div><div class="reminder-actions"><button class="button subtle" id="notification-test">Проверить уведомление</button><button class="button subtle" id="pause-button">Пауза на час</button><button class="button primary" id="notifications-enable">Включить уведомления</button></div></section>
+  <footer>У каждого свой прогресс. Профиль открывается в этом браузере; в другом браузере будет новый план. Отмечай модули после завершения в Coursera.</footer>
+</main>
+<section class="notification-invite" id="notification-invite" aria-label="Разрешить напоминания"><button class="invite-close" id="invite-close" aria-label="Закрыть предложение">×</button><div class="invite-symbol">◷</div><h2>Напоминать об учёбе?</h2><p>Раз в 30 минут — текущий курс и ссылка на него. Напоминания работают, пока календарь открыт.</p><button class="button primary" id="invite-enable">Да, хочу уведомления</button><small>Браузер попросит твоё разрешение</small></section>
+<dialog id="settings-dialog"><form id="settings-form"><div class="dialog-heading"><div><div class="eyebrow">ТВОЙ ПЛАН</div><h2>Настройки календаря</h2></div><button type="button" class="icon-button" id="settings-close" aria-label="Закрыть">×</button></div><label class="field-label" for="start-date">Общая дата начала</label><input id="start-date" type="date" required min="2020-01-01" max="2100-12-31"><p class="field-help">Будущие модули сдвинутся вместе с календарём. Фактические даты уже пройденных курсов сохранятся.</p><details class="track-dates"><summary>Настроить даты по предметам</summary><div id="track-date-fields"></div></details><fieldset><legend>Программа предпринимательства</legend><label class="radio-card"><input type="radio" name="program" value="technological"><span><strong>Технологическое предпринимательство</strong><small>Текущий список курсов и сохранённый прогресс</small></span></label><label class="radio-card"><input type="radio" name="program" value="general"><span><strong>Предпринимательство</strong><small>Ожидаем список курсов — добавим позже</small></span></label></fieldset><p class="field-help">Напоминания работают, пока сайт открыт в браузере. После закрытия вкладки они прекращаются. Пауза и выключение сохраняются только для твоего профиля.</p><button type="button" class="button subtle" id="settings-reset">Сбросить мой план</button><div class="dialog-actions"><button type="button" class="button subtle" id="notifications-disable">Выключить напоминания</button><button class="button primary" type="submit">Сохранить настройки</button></div></form></dialog>
+<dialog id="complete-dialog"><div class="dialog-heading"><h2>Отметить прохождение?</h2></div><p id="complete-description"></p><p class="field-help">Отметка сохранится, и станет доступен следующий модуль этого предмета.</p><div class="dialog-actions"><button class="button subtle" id="complete-cancel">Отмена</button><button class="button primary" id="complete-confirm">Да, модуль пройден</button></div></dialog>
+<dialog id="reset-dialog"><div class="dialog-heading"><h2>Сбросить твой план?</h2></div><p>Отметки и проценты будут удалены только в этом браузере. Сначала можно скачать копию прогресса. Дата начала станет сегодняшней.</p><div class="dialog-actions"><button class="button subtle" id="reset-cancel">Отмена</button><button class="button primary" id="reset-confirm">Да, сбросить мой план</button></div></dialog><div class="toast" id="toast" role="status" hidden></div>
+</body></html>

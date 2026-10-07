@@ -1,0 +1,9 @@
+node_modules/
+backend/node_modules/
+backend/dist/
+*.tar.gz
+data/*state*
+data/*.log
+data/*.jsonl
+data/*.pid
+.env*
