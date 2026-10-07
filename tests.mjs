@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { buildSchedule, completeCourse, reschedule, reminderTarget, validateState, clone, dayISO, earliestFinish } from './core.mjs';
+import { buildSchedule, completeCourse, reschedule, reminderTarget, validateState, dayISO, earliestFinish, migrateState } from './core.mjs';
 import { createState, effectivePlan, applyAction } from './profile.mjs';
 const plan = JSON.parse(fs.readFileSync(new URL('./data/plan.json',import.meta.url),'utf8').replace(/^\uFEFF/,''));
 function fresh(){return createState(plan,new Date('2026-10-08T14:00Z'),'2026-10-07');}
@@ -12,10 +12,11 @@ test('baseline matches all 32 modules and the saved 7 Oct–2 Nov schedule',()=>
   assert.equal(dayISO(s.tracks[0].courses[1].start),'2026-10-09');
   assert.equal(dayISO(s.tracks[2].courses[1].start),'2026-10-09');
 });
-test('completion starts only the next module in the same track, at the actual time',()=>{
+test('completion activates the next module without changing its planned dates',()=>{
   const state=fresh();completeCourse(plan,state,'qa-quality-testing',new Date('2026-10-08T14:00Z'));
   assert.equal(state.CourseStarted['qa-practical-testing'],'2026-10-08T14:00:00.000Z');
   assert.equal(Object.keys(state.CourseCompleted).length,1);
+  assert.equal(state.CoursePlanStart['qa-practical-testing'],'2026-10-09');
   assert.throws(()=>completeCourse(plan,state,'qa-modern-testing-tools',new Date('2026-10-08T15:00Z')),/предыдущий/);
   validateState(plan,state);
 });
@@ -26,7 +27,7 @@ test('shifting start moves future modules but preserves actual completion histor
   assert.equal(state.CourseCompleted['qa-quality-testing'],actual);
   assert.equal(dayISO(s.tracks[0].courses[0].end),'2026-10-08');
   assert.equal(dayISO(s.tracks[2].courses[0].start),'2026-10-10');
-  assert.equal(dayISO(s.tracks[0].courses[1].start),'2026-10-11');
+  assert.equal(dayISO(s.tracks[0].courses[1].start),'2026-10-12');
   assert.equal(dayISO(earliestFinish(plan,state,'architecture')),'2026-11-05');
   assert.throws(()=>completeCourse(plan,state,'architecture-design',new Date('2026-10-08T16:00Z')),/ещё/);
 });
@@ -64,10 +65,10 @@ test('finished tracks retain their valid history when other dates change',()=>{
  const state=fresh();for(const c of plan.Courses.filter(c=>c.TrackId==='architecture'))completeCourse(plan,state,c.Id,new Date('2026-11-02T12:00Z'));
  reschedule(plan,state,'2026-11-20');validateState(plan,state);assert.equal(state.TrackPlanStart.architecture,'2026-10-07');
 });
-test('final eligible day does not append a second reserve',()=>{
+test('overdue work never moves planned dates or adds reserve days',()=>{
  const state=fresh();for(const c of plan.Courses.filter(c=>c.TrackId==='architecture').slice(0,-1))completeCourse(plan,state,c.Id,new Date('2026-10-08T14:00Z'));
  for(const d of ['2026-11-01','2026-11-02'])assert.equal(dayISO(buildSchedule(plan,state,new Date(d+'T12:00Z')).tracks.find(t=>t.Id==='architecture').end),'2026-11-02');
- assert.equal(dayISO(buildSchedule(plan,state,new Date('2026-11-03T12:00Z')).tracks.find(t=>t.Id==='architecture').end),'2026-11-05');
+ assert.equal(dayISO(buildSchedule(plan,state,new Date('2026-11-03T12:00Z')).tracks.find(t=>t.Id==='architecture').end),'2026-11-02');
 });
 test('general entrepreneurship hides its pending courses from actions and reminders',()=>{
  let state=applyAction(plan,fresh(),{type:'program',program:'general'}),current=effectivePlan(plan,state);
@@ -75,4 +76,74 @@ test('general entrepreneurship hides its pending courses from actions and remind
  assert.throws(()=>applyAction(plan,state,{type:'complete',id:'entrepreneurship-scaleup'}),/Неизвестный/);
  for(let i=0;i<32;i++){state.ReminderCursor=i;assert.notEqual(reminderTarget(current,state,new Date('2026-10-08T14:00Z')).course.TrackId,'entrepreneurship');}
  state=applyAction(plan,state,{type:'program',program:'technological'});assert.equal(effectivePlan(plan,state).Courses.length,32);
+});
+const ranges = schedule => schedule.tracks.map(t=>({id:t.Id,start:t.start,end:t.end,courses:t.courses.map(c=>({id:c.Id,start:c.start,end:c.end,days:c.days}))}));
+test('early and late completion preserve every bar length and every planned date',()=>{
+ const now=new Date('2026-10-08T14:00Z');
+ for(const completedAt of [now,new Date('2026-10-22T14:00Z')]) {
+  const state=createState(plan,now,'2026-10-08'),before=ranges(buildSchedule(plan,state,now));
+  completeCourse(plan,state,'qa-quality-testing',completedAt);
+  completeCourse(plan,state,'qa-practical-testing',completedAt);
+  const after=buildSchedule(plan,state,completedAt);
+  assert.deepEqual(ranges(after),before);
+  assert.equal(after.tracks[0].courses[0].end-after.tracks[0].courses[0].start+1,2);
+  assert.equal(dayISO(after.tracks[0].courses[2].start),'2026-10-12');
+ }
+});
+test('undoing an earlier module keeps later completion and can be completed again',()=>{
+ const now=new Date('2026-10-08T14:00Z');let state=createState(plan,now,'2026-10-08');
+ state=applyAction(plan,state,{type:'complete',id:'qa-quality-testing'},now);
+ state=applyAction(plan,state,{type:'complete',id:'qa-practical-testing'},now);
+ const secondDone=state.CourseCompleted['qa-practical-testing'],before=ranges(buildSchedule(plan,state,now));
+ state=applyAction(plan,state,{type:'uncomplete',id:'qa-quality-testing'},new Date('2026-10-09T14:00Z'));
+ assert.equal(state.CourseCompleted['qa-quality-testing'],undefined);
+ assert.equal(state.CourseCompleted['qa-practical-testing'],secondDone);
+ assert.equal(state.SelectedId,'qa-quality-testing');
+ assert.deepEqual(ranges(buildSchedule(plan,state,new Date('2026-10-09T14:00Z'))),before);
+ state=applyAction(plan,state,{type:'complete',id:'qa-quality-testing'},new Date('2026-10-10T14:00Z'));
+ assert.equal(state.CourseCompleted['qa-practical-testing'],secondDone);
+ assert.equal(state.SelectedId,'qa-modern-testing-tools');validateState(plan,state);
+});
+test('undo restores the previous manual percentage and rejects unmarked modules',()=>{
+ const now=new Date('2026-10-08T14:00Z');let state=createState(plan,now);
+ state=applyAction(plan,state,{type:'progress',id:'qa-quality-testing',value:45},now);
+ state=applyAction(plan,state,{type:'complete',id:'qa-quality-testing'},now);
+ state=applyAction(plan,state,{type:'uncomplete',id:'qa-quality-testing'},now);
+ assert.equal(state.Progress['qa-quality-testing'],45);
+ assert.throws(()=>applyAction(plan,state,{type:'uncomplete',id:'qa-practical-testing'},now),/ещё не/);
+ assert.throws(()=>applyAction(plan,state,{type:'uncomplete',id:'unknown'},now),/Неизвестный/);
+});
+test('legacy profiles recover shifted and compressed bars without losing progress',()=>{
+ const now=new Date('2026-10-08T14:00Z');let state=createState(plan,now,'2026-10-08');
+ state=applyAction(plan,state,{type:'complete',id:'qa-quality-testing'},now);
+ state=applyAction(plan,state,{type:'complete',id:'qa-practical-testing'},now);
+ state=applyAction(plan,state,{type:'reschedule',date:'2026-10-20',trackId:'security'},now);
+ state.Program='general';state.Progress['qa-modern-testing-tools']=55;state.SchemaVersion=1;
+ state.CoursePlanStart={'qa-modern-testing-tools':'2026-10-08'};delete state.ProgressBeforeComplete;
+ const completed=structuredClone(state.CourseCompleted),started=structuredClone(state.CourseStarted),progress=structuredClone(state.Progress);
+ assert.equal(migrateState(plan,state),true);
+ assert.equal(state.SchemaVersion,2);assert.equal(Object.keys(state.CoursePlanStart).length,32);
+ assert.equal(state.CoursePlanStart['qa-practical-testing'],'2026-10-10');
+ assert.equal(state.CoursePlanStart['qa-modern-testing-tools'],'2026-10-12');
+ assert.equal(state.CoursePlanStart['security-analyst'],'2026-10-20');
+ assert.equal(state.CoursePlanStart['entrepreneurship-scaleup'],'2026-10-08');
+ assert.deepEqual(state.CourseCompleted,completed);assert.deepEqual(state.CourseStarted,started);assert.deepEqual(state.Progress,progress);
+ validateState(plan,state);
+ reschedule(plan,state,'2026-10-09','qa');const dates=structuredClone(state.CoursePlanStart);
+ assert.equal(migrateState(plan,state),false);assert.deepEqual(state.CoursePlanStart,dates);
+ const undone=applyAction(plan,state,{type:'uncomplete',id:'qa-quality-testing'},now);
+ assert.equal(undone.Progress['qa-quality-testing'],100);
+ assert.equal(undone.CourseCompleted['qa-practical-testing'],completed['qa-practical-testing']);
+});
+test('finishing an entire track preserves its original calendar span',()=>{
+ const state=fresh(),now=new Date('2026-11-02T12:00Z'),before=ranges(buildSchedule(plan,state,now));
+ for(const c of plan.Courses.filter(c=>c.TrackId==='architecture'))completeCourse(plan,state,c.Id,now);
+ assert.deepEqual(ranges(buildSchedule(plan,state,now)),before);validateState(plan,state);
+});
+test('completion across UTC+5 midnight records the fact separately from the plan',()=>{
+ const now=new Date('2026-10-07T20:00Z'),state=createState(plan,now,'2026-10-08');
+ completeCourse(plan,state,'qa-quality-testing',now);
+ const course=buildSchedule(plan,state,now).tracks[0].courses[0];
+ assert.equal(dayISO(course.start),'2026-10-08');assert.equal(dayISO(course.end),'2026-10-09');
+ assert.equal(course.completedAt,'2026-10-07T20:00:00.000Z');
 });

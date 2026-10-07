@@ -1,8 +1,9 @@
-import { clone, DAY, localDay, dayISO, activate, buildSchedule, completeCourse, reschedule, validateState } from './core.mjs';
+import { clone, DAY, localDay, dayISO, activate, buildSchedule, completeCourse, uncompleteCourse, initializeCoursePlan, migrateState, reschedule, validateState } from './core.mjs';
 
 export function createState(plan, now = new Date(), start = dayISO(localDay(now, plan))) {
   const began = new Date(Date.parse(start) - plan.TimeZoneOffsetMinutes * 60000).toISOString();
-  const state = { SchemaVersion:1, TrackStarted:Object.fromEntries(plan.Tracks.map(t=>[t.Id,began])), TrackPlanStart:Object.fromEntries(plan.Tracks.map(t=>[t.Id,start])), CoursePlanStart:{}, CourseStarted:{}, CourseCompleted:{}, Progress:{}, SelectedId:plan.Courses[0].Id, ReminderCursor:0, Program:'technological', NotificationsEnabled:false, NextNotificationUtc:null, SnoozeUtc:null };
+  const state = { SchemaVersion:2, TrackStarted:Object.fromEntries(plan.Tracks.map(t=>[t.Id,began])), TrackPlanStart:Object.fromEntries(plan.Tracks.map(t=>[t.Id,start])), CoursePlanStart:{}, CourseStarted:{}, CourseCompleted:{}, Progress:{}, ProgressBeforeComplete:{}, SelectedId:plan.Courses[0].Id, ReminderCursor:0, Program:'technological', NotificationsEnabled:false, NextNotificationUtc:null, SnoozeUtc:null };
+  initializeCoursePlan(plan, state);
   activate(plan, state, now);
   return state;
 }
@@ -14,11 +15,13 @@ export function snapshot(plan, profile, now = new Date(), pushReady = false) {
   return { plan:current, originalTracks:plan.Tracks, state:profile.state, version:profile.version, schedule:buildSchedule(current,profile.state,now), pushReady, notificationError:profile.notificationError || null };
 }
 export function applyAction(plan, original, input, now = new Date()) {
-  const state = clone(original), current = effectivePlan(plan,state);
+  const state = clone(original); migrateState(plan,state);
+  const current = effectivePlan(plan,state);
   const course = current.Courses.find(c=>c.Id===input.id);
   switch(input.type) {
     case 'select': if(!course)throw new Error('Неизвестный модуль.');state.SelectedId=course.Id;break;
     case 'complete': completeCourse(current,state,input.id,now);break;
+    case 'uncomplete': uncompleteCourse(current,state,input.id);break;
     case 'progress':
       if(!course || state.CourseCompleted[input.id] || !Number.isInteger(input.value) || input.value<0 || input.value>100)throw new Error('Укажите процент от 0 до 100 для непройденного модуля.');
       state.Progress[input.id]=input.value;break;

@@ -1,5 +1,5 @@
-import { createState, applyAction, effectivePlan } from './profile.mjs';
-import { reminderTarget, activate } from './core.mjs';
+import { createState, applyAction, effectivePlan } from './profile.mjs?v=2';
+import { reminderTarget, activate, migrateState } from './core.mjs?v=2';
 let database;
 function open() {return database ||= new Promise((resolve,reject)=>{const r=indexedDB.open('coursera-personal-calendar-v3',1);r.onupgradeneeded=()=>r.result.createObjectStore('profiles');r.onsuccess=()=>resolve(r.result);r.onerror=()=>{database=null;reject(new Error('Разреши хранение данных для этого сайта.'));};});}
 async function transaction(plan,change=null) {
@@ -7,7 +7,7 @@ async function transaction(plan,change=null) {
  return new Promise((resolve,reject)=>{
   const tx=db.transaction('profiles','readwrite'),store=tx.objectStore('profiles'),read=store.get('personal');let result;
   read.onsuccess=()=>{
-   try {const current=read.result||{state:createState(plan),version:1};if(activate(effectivePlan(plan,current.state),current.state,new Date()))current.version++;result=change?change(current):current;if(result)store.put({state:result.state,version:result.version},'personal');}
+   try {const current=read.result||{state:createState(plan),version:1};const migrated=migrateState(plan,current.state);const activated=activate(effectivePlan(plan,current.state),current.state,new Date());if(migrated||activated)current.version++;result=change?change(current):current;if(result)store.put({state:result.state,version:result.version},'personal');}
    catch(error){reject(error);tx.abort();}
   };
   tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(new Error('Не удалось сохранить изменения.'));tx.onabort=()=>reject(new Error('Изменения не сохранены.'));

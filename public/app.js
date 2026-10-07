@@ -1,8 +1,8 @@
-import { snapshot } from './profile.mjs';
-import { reminderTarget } from './core.mjs';
-import { readProfile, changeProfile, claimReminder } from './storage.mjs';
+import { snapshot } from './profile.mjs?v=2';
+import { reminderTarget } from './core.mjs?v=2';
+import { readProfile, changeProfile, claimReminder } from './storage.mjs?v=2';
 const $ = id => document.getElementById(id);
-let data, plan, selected, view = 'calendar', weekStart = null, completeId, dirtySettings = false, swRegistration, calendarStart, calendarEnd;
+let data, plan, selected, view = 'calendar', weekStart = null, completeId, completeMode = 'complete', dirtySettings = false, swRegistration, calendarStart, calendarEnd;
 const colors = {qa:['#2463df','#e3edff','Тестирование'], security:['#24a38b','#e3f3ef','Безопасность'], architecture:['#7e62d7','#eee9fb','Архитектура'], entrepreneurship:['#d29436','#fcf2df','Предпринимательство']};
 const subcourseNames = {'entrepreneurship-scaleup':['Why Scale a Startup?','Scaling Product and Processes','Building Culture in a Scale Up','Scale Up Specialization Capstone'], 'security-analyst':['Penetration Testing, Threat Hunting, and Cryptography','Incident Response and Digital Forensics','Cybersecurity Case Studies and Capstone Project']};
 const escape = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
@@ -109,8 +109,11 @@ function renderSelected() {
   const track=data.schedule.tracks.find(t=>t.Id===c.TrackId);
   const completedDate=c.completedAt?new Date(c.completedAt).toLocaleDateString('ru-RU',{timeZone:'Asia/Qyzylorda'}):null;
   const bundle=c.Id==='entrepreneurship-scaleup'?'Отметка означает завершение всех четырёх курсов специализации.':c.Id==='security-analyst'?'Отметка означает завершение всех трёх курсов специализации.':'';
-  const gate=!c.canComplete&&c.active&&c.status==='planned'?'Начало модуля — '+fmt(c.start,{day:'numeric',month:'long'})+'.':!c.canComplete&&c.active&&track.courses.at(-1).Id===c.Id&&c.status!=='completed'?'Завершение предмета — не раньше '+fmt(track.earliest,{day:'numeric',month:'long'})+'.':'';
-  $('selection-panel').innerHTML=`<div class="selected-copy"><strong>${escape(c.Title)}</strong><p>${completedDate?'Фактически пройден '+completedDate:fmt(c.start)+' — '+fmt(c.end)+' · '+c.Hours+' ч · '+statusName(c)}${bundle?'<br>'+bundle:''}${gate?'<br>'+gate:''}</p></div><div class="selected-actions"><a class="button subtle" href="${escape(c.Url)}" target="_blank" rel="noopener">Открыть модуль</a><button class="button primary" data-complete="${c.Id}" ${!c.canComplete?'disabled':''}>${c.status==='completed'?'Пройден ✓':'Модуль пройден'}</button></div>`;
+  const gate=!c.canComplete&&c.active&&c.status==='planned'?'Начало модуля — '+fmt(c.start,{day:'numeric',month:'long'})+'.':!c.canComplete&&c.active&&track.courses.filter(x=>x.status!=='completed').length===1&&c.status!=='completed'?'Завершение предмета — не раньше '+fmt(track.earliest,{day:'numeric',month:'long'})+'.':'';
+  const completionButton=c.status==='completed'
+    ? `<button class="button subtle" data-uncomplete="${c.Id}" aria-haspopup="dialog" aria-controls="complete-dialog" aria-label="Убрать отметку о прохождении ${escape(c.Title)}">Убрать отметку</button>`
+    : `<button class="button primary" data-complete="${c.Id}" aria-haspopup="dialog" aria-controls="complete-dialog" ${!c.canComplete?'disabled':''}>Модуль пройден</button>`;
+  $('selection-panel').innerHTML=`<div class="selected-copy"><strong>${escape(c.Title)}</strong><p>${completedDate?'Фактически пройден '+completedDate:fmt(c.start)+' — '+fmt(c.end)+' · '+c.Hours+' ч · '+statusName(c)}${bundle?'<br>'+bundle:''}${gate?'<br>'+gate:''}</p></div><div class="selected-actions"><a class="button subtle" href="${escape(c.Url)}" target="_blank" rel="noopener">Открыть модуль</a>${completionButton}</div>`;
 }
 function renderView() {
   $('calendar-view').hidden=view!=='calendar';$('modules-view').hidden=view!=='modules';
@@ -158,7 +161,17 @@ document.addEventListener('click',async event=>{
     if(button.dataset.view){view=button.dataset.view;renderView();return;}
     if(button.dataset.filter){$('track-filter').value=button.dataset.filter;render();return;}
     if(button.dataset.select){await action({type:'select',id:button.dataset.select});return;}
-    if(button.dataset.complete){completeId=button.dataset.complete;const c=getCourse(completeId);$('complete-description').textContent=c.Id==='entrepreneurship-scaleup'?'Все четыре курса Scale Up Your Startup завершены?':c.Id==='security-analyst'?'Все три курса Security Analyst Fundamentals завершены?':'Ты завершил «'+c.Title+'» в Coursera?';$('complete-dialog').showModal();return;}
+    if(button.dataset.complete||button.dataset.uncomplete){
+      completeMode=button.dataset.uncomplete?'uncomplete':'complete';
+      completeId=button.dataset.uncomplete||button.dataset.complete;
+      const c=getCourse(completeId);if(!c)throw new Error('Неизвестный модуль.');
+      const removing=completeMode==='uncomplete';
+      $('complete-title').textContent=removing?'Убрать отметку?':'Отметить прохождение?';
+      $('complete-description').textContent=removing?'Убрать отметку о прохождении «'+c.Title+'»?':c.Id==='entrepreneurship-scaleup'?'Все четыре курса Scale Up Your Startup завершены?':c.Id==='security-analyst'?'Все три курса Security Analyst Fundamentals завершены?':'Ты завершил «'+c.Title+'» в Coursera?';
+      $('complete-note').textContent=removing?'Снимается только отметка этого модуля. Даты плана и отметки остальных модулей сохранятся.':'Отметка сохранится. Даты плана и длина полосы модуля не изменятся.';
+      $('complete-confirm').textContent=removing?'Да, убрать отметку':'Да, модуль пройден';
+      $('complete-dialog').showModal();return;
+    }
     switch(button.id){
       case 'retry-load':if(await load())button.hidden=true;break;
       case 'export-progress':{const blob=new Blob([JSON.stringify({schema:1,exportedAt:new Date().toISOString(),state:data.state},null,2)],{type:'application/json'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='my-study-progress.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);break;}
@@ -168,7 +181,7 @@ document.addEventListener('click',async event=>{
       case 'reset-cancel':$('reset-dialog').close();break;
       case 'reset-confirm':await action({type:'reset'});$('reset-dialog').close();showToast('Твой план сброшен. Начало — сегодня, прогресс — 0.');break;
       case 'complete-cancel':$('complete-dialog').close();break;
-      case 'complete-confirm':await action({type:'complete',id:completeId});$('complete-dialog').close();showToast('Прохождение сохранено. Следующий модуль доступен.');break;
+      case 'complete-confirm':await action({type:completeMode,id:completeId});$('complete-dialog').close();showToast(completeMode==='uncomplete'?'Отметка снята. Остальные модули и даты сохранены.':'Прохождение сохранено. Даты плана не изменились.');break;
       case 'invite-close':$('notification-invite').hidden=true;sessionStorage.setItem('invite-dismissed','yes');break;
       case 'invite-enable':await enableNotifications();break;
       case 'notifications-enable':data.state.NotificationsEnabled?openSettings():await enableNotifications();break;
