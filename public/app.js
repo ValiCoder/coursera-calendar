@@ -1,9 +1,9 @@
-import { snapshot } from './profile.mjs?v=4';
-import { reminderTarget, importantDates } from './core.mjs?v=4';
-import { readProfile, changeProfile, claimReminder } from './storage.mjs?v=4';
+import { snapshot } from './profile.mjs?v=5';
+import { reminderTarget, importantDates } from './core.mjs?v=5';
+import { readProfile, changeProfile, claimReminder } from './storage.mjs?v=5';
 const $ = id => document.getElementById(id);
 let data, plan, selected, view = 'calendar', weekStart = null, completeId, completeMode = 'complete', dirtySettings = false, swRegistration, calendarStart, calendarEnd;
-const colors = {qa:['#2463df','#e3edff','Тестирование'], security:['#24a38b','#e3f3ef','Безопасность'], architecture:['#7e62d7','#eee9fb','Архитектура'], entrepreneurship:['#d29436','#fcf2df','Предпринимательство']};
+const colors = {qa:['#2463df','#e3edff','Тестирование'], security:['#24a38b','#e3f3ef','Безопасность'], architecture:['#7e62d7','#eee9fb','Архитектура'], entrepreneurship:['#d29436','#fcf2df','Технологическое предпринимательство']};
 const subcourseNames = {'entrepreneurship-scaleup':['Why Scale a Startup?','Scaling Product and Processes','Building Culture in a Scale Up','Scale Up Specialization Capstone'], 'security-analyst':['Penetration Testing, Threat Hunting, and Cryptography','Incident Response and Digital Forensics','Cybersecurity Case Studies and Capstone Project']};
 const escape = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
 const date = day => new Date(day * 86400000);
@@ -11,7 +11,7 @@ const fmt = (day, opts={day:'numeric',month:'short'}) => date(day).toLocaleDateS
 const localTime = iso => new Date(iso).toLocaleTimeString('ru-RU',{timeZone:'Asia/Qyzylorda',hour:'2-digit',minute:'2-digit'});
 const dateISO = day => date(day).toISOString().slice(0,10);
 const getCourse = id => data.schedule.tracks.flatMap(t => t.courses).find(c => c.Id === id);
-const statusName = c => c.status === 'completed' ? 'Пройден' : c.status === 'overdue' ? 'Продолжить' : c.status === 'active' ? 'В работе' : 'В плане';
+const statusName = c => c.status === 'completed' ? 'Пройден' : c.status === 'deferred' ? 'Отложен' : c.status === 'overdue' ? 'Продолжить' : c.status === 'active' ? 'В работе' : 'В плане';
 const colorStyle = trackId => `--track-color:${colors[trackId][0]};--track-pale:${colors[trackId][1]}`;
 const formatHours = value => value.toLocaleString('ru-RU',{maximumFractionDigits:1});
 function showToast(message) { $('toast').textContent = message; $('toast').hidden = false; clearTimeout(showToast.timer); showToast.timer = setTimeout(() => $('toast').hidden = true,4500); }
@@ -35,7 +35,8 @@ function render() {
   const schedule = data.schedule;
   const today = schedule.today;
   $('today-label').textContent = fmt(today,{day:'numeric',month:'long',year:'numeric'});
-  $('header-description').textContent = data.state.Program === 'general' ? 'Три предмета в работе. Список предпринимательства добавим позже.' : 'Четыре предмета параллельно · модули по порядку';
+  $('header-description').textContent = data.state.Program === 'general' ? 'Обычное предпринимательство: ожидаем отдельный список. Три других предмета доступны.' : 'Четыре предмета · Technological Entrepreneurship · расширенный план';
+  $('plan-update-note').textContent = 'Все курсы из расчёта сохранены вместе с дополнительными. Расписание по 10 октября включительно сохранено; дальнейший порядок уточнён. Часы обозначают объём программ, а не личную дневную нагрузку.';
   const completed = data.plan.Courses.filter(c => data.state.CourseCompleted[c.Id]).length;
   $('stat-completed').innerHTML = `${completed} <span>/ ${data.plan.Courses.length}</span>`;
   $('total-progress').style.width = completed / data.plan.Courses.length * 100 + '%';
@@ -62,10 +63,13 @@ function render() {
     const completedHours=t.courses.reduce((sum,course)=>sum+course.Hours*course.progress/100,0);
     const subjectHours=`<div class="course-card-hours">Предмет: ${formatHours(totalHours)} ч · Пройдено: ${formatHours(completedHours)} ч</div>`;
     const c = t.courses.find(c=>c.active);
-    if (!c) return `<article class="course-card" style="${colorStyle(t.Id)}"><div class="course-card-head">${colors[t.Id][2]}</div><h2>Предмет завершён</h2><p class="course-card-meta">Все модули пройдены</p>${subjectHours}</article>`;
+    if (!c) {
+      const deferred=t.courses.filter(x=>x.status==='deferred');
+      return `<article class="course-card" style="${colorStyle(t.Id)}"><div class="course-card-head">${colors[t.Id][2]}</div><h2>${deferred.length?'Доступные модули завершены':'Предмет завершён'}</h2><p class="course-card-meta">${deferred.length?'Отложено модулей: '+deferred.length+'. Их можно вернуть в плане.':'Все модули пройдены'}</p>${subjectHours}</article>`;
+    }
     const sub = data.state.SubcourseProgress?.[c.Id];
     const subIndex = sub?.findIndex(v=>v<100);
-    const subName = sub && subIndex >= 0 ? subcourseNames[c.Id][subIndex] : '';
+    const subName = sub && subIndex >= 0 ? subcourseNames[c.Id]?.[subIndex] || '' : '';
     const value = sub ? sub[subIndex] || 0 : c.progress;
     const progressText = sub ? `${sub.filter(v=>v===100).length}/${sub.length} курсов · текущий: ${value}%` : `${c.progress}% пройдено`;
     return `<article class="course-card ${selected===c.Id?'selected':''}" data-course="${c.Id}" style="${colorStyle(t.Id)}"><div class="course-card-head"><span>${colors[t.Id][2]}</span><span class="tag ${c.status}">${statusName(c)}</span></div><button class="course-card-title" data-select="${c.Id}">${escape(subName || c.Title)}</button><div class="course-card-meta">${subName?escape(c.Title):fmt(c.start)+' — '+fmt(c.end)+' · '+c.Hours+' ч'}</div>${subjectHours}<div class="card-progress"><span style="width:${value}%"></span></div><div class="card-bottom"><span>${progressText}</span><button data-select="${c.Id}">Продолжить</button></div></article>`;
@@ -137,12 +141,17 @@ function renderSelected() {
   const c = getCourse(selected); if (!c) {$('selection-panel').innerHTML='Выбери модуль в календаре.';return;}
   const track=data.schedule.tracks.find(t=>t.Id===c.TrackId);
   const completedDate=c.completedAt?new Date(c.completedAt).toLocaleDateString('ru-RU',{timeZone:'Asia/Qyzylorda'}):null;
-  const bundle=c.Id==='entrepreneurship-scaleup'?'Отметка означает завершение всех четырёх курсов специализации.':c.Id==='security-analyst'?'Отметка означает завершение всех трёх курсов специализации.':'';
-  const gate=!c.canComplete&&c.active&&c.status==='planned'?'Начало модуля — '+fmt(c.start,{day:'numeric',month:'long'})+'.':!c.canComplete&&c.active&&track.courses.filter(x=>x.status!=='completed').length===1&&c.status!=='completed'?'Завершение предмета — не раньше '+fmt(track.earliest,{day:'numeric',month:'long'})+'.':'';
+  const included=c.IncludedCourses || [];
+  const bundle=included.length>1?'Отметка означает завершение всех '+included.length+' курсов этого блока.':'';
+  const coverage=c.CreditPlanRole==='additional'?'Дополнительный блок сверх расчёта кредитов.':'';
+  const availability=c.Availability==='unconfirmed'?'Доступность не подтверждена. Если курс не открывается, отложи этот блок и продолжи остальные.':'';
+  const courseList=included.length>1?`<details class="included-courses"><summary>Курсы внутри блока (${included.length})</summary><ul>${included.map(x=>`<li>${escape(x.Title)}${x.InCreditPlan?'':' <span>Дополнительный</span>'}</li>`).join('')}</ul></details>`:'';
+  const gate=!c.canComplete&&c.active&&c.status==='planned'?'Начало модуля — '+fmt(c.start,{day:'numeric',month:'long'})+'.':!c.canComplete&&c.active&&track.courses.filter(x=>x.status!=='completed'&&x.status!=='deferred').length===1&&c.status!=='completed'?'Завершение предмета — не раньше '+fmt(track.earliest,{day:'numeric',month:'long'})+'.':'';
+  const deferButton=c.Availability==='unconfirmed'&&c.status!=='completed'?`<button class="button subtle" data-defer="${c.Id}" data-value="${c.status!=='deferred'}">${c.status==='deferred'?'Вернуть в план':'Отложить недоступный блок'}</button>`:'';
   const completionButton=c.status==='completed'
     ? `<button class="button subtle" data-uncomplete="${c.Id}" aria-haspopup="dialog" aria-controls="complete-dialog" aria-label="Убрать отметку о прохождении ${escape(c.Title)}">Убрать отметку</button>`
     : `<button class="button primary" data-complete="${c.Id}" aria-haspopup="dialog" aria-controls="complete-dialog" ${!c.canComplete?'disabled':''}>Модуль пройден</button>`;
-  $('selection-panel').innerHTML=`<div class="selected-copy"><strong>${escape(c.Title)}</strong><p>${completedDate?'Фактически пройден '+completedDate:fmt(c.start)+' — '+fmt(c.end)+' · '+c.Hours+' ч · '+statusName(c)}${bundle?'<br>'+bundle:''}${gate?'<br>'+gate:''}</p></div><div class="selected-actions"><a class="button subtle" href="${escape(c.Url)}" target="_blank" rel="noopener">Открыть модуль</a>${completionButton}</div>`;
+  $('selection-panel').innerHTML=`<div class="selected-copy"><strong>${escape(c.Title)}</strong><p>${completedDate?'Фактически пройден '+completedDate:fmt(c.start)+' — '+fmt(c.end)+' · '+c.Hours+' ч · '+statusName(c)}${bundle?'<br>'+bundle:''}${coverage?'<br>'+coverage:''}${availability?'<br>'+availability:''}${gate?'<br>'+gate:''}</p>${courseList}</div><div class="selected-actions"><a class="button subtle" href="${escape(c.Url)}" target="_blank" rel="noopener">Открыть модуль</a>${deferButton}${completionButton}</div>`;
 }
 function renderView() {
   $('calendar-view').hidden=view!=='calendar';$('modules-view').hidden=view!=='modules';
@@ -196,13 +205,14 @@ document.addEventListener('click',async event=>{
     if(selectId){if(event.detail>1)return;if(selected!==selectId)await action({type:'select',id:selectId});return;}
     if(button.dataset.view){view=button.dataset.view;renderView();return;}
     if(button.dataset.filter){$('track-filter').value=button.dataset.filter;render();return;}
+    if(button.dataset.defer){await action({type:'defer',id:button.dataset.defer,value:button.dataset.value==='true'});showToast(button.dataset.value==='true'?'Блок отложен. Его прогресс и даты сохранены.':'Блок возвращён в план.');return;}
     if(button.dataset.complete||button.dataset.uncomplete){
       completeMode=button.dataset.uncomplete?'uncomplete':'complete';
       completeId=button.dataset.uncomplete||button.dataset.complete;
       const c=getCourse(completeId);if(!c)throw new Error('Неизвестный модуль.');
       const removing=completeMode==='uncomplete';
       $('complete-title').textContent=removing?'Убрать отметку?':'Отметить прохождение?';
-      $('complete-description').textContent=removing?'Убрать отметку о прохождении «'+c.Title+'»?':c.Id==='entrepreneurship-scaleup'?'Все четыре курса Scale Up Your Startup завершены?':c.Id==='security-analyst'?'Все три курса Security Analyst Fundamentals завершены?':'Ты завершил «'+c.Title+'» в Coursera?';
+      $('complete-description').textContent=removing?'Убрать отметку о прохождении «'+c.Title+'»?':c.IncludedCourses?.length>1?'Все '+c.IncludedCourses.length+' курсов блока «'+c.Title+'» завершены?':'Ты завершил «'+c.Title+'» в Coursera?';
       $('complete-note').textContent=removing?'Снимается только отметка этого модуля. Даты плана и отметки остальных модулей сохранятся.':'Отметка сохранится. Даты плана и длина полосы модуля не изменятся.';
       $('complete-confirm').textContent=removing?'Да, убрать отметку':'Да, модуль пройден';
       $('complete-dialog').showModal();return;
@@ -280,7 +290,7 @@ async function registerWebMCP() {
 async function init() {
   try {
     if(sessionStorage.getItem('invite-dismissed'))$('notification-invite').hidden=true;
-    plan=await (await fetch('./plan.json')).json();
+    plan=await (await fetch('./plan.json?v=5',{cache:'no-cache'})).json();
     if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').then(()=>navigator.serviceWorker.ready).then(r=>{swRegistration=r;}).catch(()=>{});}
     if(await load())registerWebMCP();
     setInterval(load,30000);setInterval(checkReminder,15000);

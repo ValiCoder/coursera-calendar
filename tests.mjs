@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { buildSchedule, completeCourse, reschedule, reminderTarget, validateState, dayISO, earliestFinish, migrateState, importantDates } from './core.mjs';
+import { buildSchedule, completeCourse, reschedule, reminderTarget, validateState, dayISO, earliestFinish, migrateState, importantDates, trackCourses } from './core.mjs';
 import { createState, effectivePlan, applyAction } from './profile.mjs';
 const plan = JSON.parse(fs.readFileSync(new URL('./data/plan.json',import.meta.url),'utf8').replace(/^\uFEFF/,''));
 function fresh(){return createState(plan,new Date('2026-10-08T14:00Z'),'2026-10-07');}
@@ -42,7 +42,7 @@ test('reminders target active courses and skip completed/future rows',()=>{
   reschedule(plan,state,'2026-12-01');assert.equal(reminderTarget(plan,state,new Date('2026-10-08T15:00Z')),null);
 });
 test('last module cannot close a track before its minimum and reserve',()=>{
-  const state=fresh(), courses=plan.Courses.filter(c=>c.TrackId==='architecture');
+  const state=fresh(), courses=trackCourses(plan,state,'architecture');
   for(const course of courses.slice(0,-1))completeCourse(plan,state,course.Id,new Date('2026-10-08T14:00Z'));
   assert.throws(()=>completeCourse(plan,state,courses.at(-1).Id,new Date('2026-10-08T15:00Z')),/минимальный/);
 });
@@ -62,11 +62,11 @@ test('an untouched future course can start earlier or later',()=>{
  assert.equal(later.CourseStarted['architecture-design'],'2026-10-19T19:00:00.000Z');
 });
 test('finished tracks retain their valid history when other dates change',()=>{
- const state=fresh();for(const c of plan.Courses.filter(c=>c.TrackId==='architecture'))completeCourse(plan,state,c.Id,new Date('2026-11-02T12:00Z'));
+ const state=fresh();for(const c of trackCourses(plan,state,'architecture'))completeCourse(plan,state,c.Id,new Date('2026-11-02T12:00Z'));
  reschedule(plan,state,'2026-11-20');validateState(plan,state);assert.equal(state.TrackPlanStart.architecture,'2026-10-07');
 });
 test('overdue work never moves planned dates or adds reserve days',()=>{
- const state=fresh();for(const c of plan.Courses.filter(c=>c.TrackId==='architecture').slice(0,-1))completeCourse(plan,state,c.Id,new Date('2026-10-08T14:00Z'));
+ const state=fresh();for(const c of trackCourses(plan,state,'architecture').slice(0,-1))completeCourse(plan,state,c.Id,new Date('2026-10-08T14:00Z'));
  for(const d of ['2026-11-01','2026-11-02'])assert.equal(dayISO(buildSchedule(plan,state,new Date(d+'T12:00Z')).tracks.find(t=>t.Id==='architecture').end),'2026-11-02');
  assert.equal(dayISO(buildSchedule(plan,state,new Date('2026-11-03T12:00Z')).tracks.find(t=>t.Id==='architecture').end),'2026-11-02');
 });
@@ -122,7 +122,7 @@ test('legacy profiles recover shifted and compressed bars without losing progres
  state.CoursePlanStart={'qa-modern-testing-tools':'2026-10-08'};delete state.ProgressBeforeComplete;
  const completed=structuredClone(state.CourseCompleted),started=structuredClone(state.CourseStarted),progress=structuredClone(state.Progress);
  assert.equal(migrateState(plan,state),true);
- assert.equal(state.SchemaVersion,2);assert.equal(Object.keys(state.CoursePlanStart).length,32);
+ assert.equal(state.SchemaVersion,3);assert.equal(Object.keys(state.CoursePlanStart).length,32);
  assert.equal(state.CoursePlanStart['qa-practical-testing'],'2026-10-10');
  assert.equal(state.CoursePlanStart['qa-modern-testing-tools'],'2026-10-12');
  assert.equal(state.CoursePlanStart['security-analyst'],'2026-10-20');
@@ -137,7 +137,7 @@ test('legacy profiles recover shifted and compressed bars without losing progres
 });
 test('finishing an entire track preserves its original calendar span',()=>{
  const state=fresh(),now=new Date('2026-11-02T12:00Z'),before=ranges(buildSchedule(plan,state,now));
- for(const c of plan.Courses.filter(c=>c.TrackId==='architecture'))completeCourse(plan,state,c.Id,now);
+ for(const c of trackCourses(plan,state,'architecture'))completeCourse(plan,state,c.Id,now);
  assert.deepEqual(ranges(buildSchedule(plan,state,now)),before);validateState(plan,state);
 });
 test('completion across UTC+5 midnight records the fact separately from the plan',()=>{
@@ -150,7 +150,7 @@ test('completion across UTC+5 midnight records the fact separately from the plan
 
 test('new profiles seed personal subscription and application dates from the plan',()=>{
  const now=new Date('2026-10-09T12:00Z'),state=createState(plan,now);
- assert.equal(state.SchemaVersion,2);
+ assert.equal(state.SchemaVersion,3);
  assert.equal(state.SubscriptionEndDate,'2026-11-05');
  assert.equal(state.ApplicationStartDate,'2026-11-01');
  assert.equal(state.ApplicationEndDate,'2026-11-09');

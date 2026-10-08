@@ -1,14 +1,17 @@
-import { clone, DAY, localDay, dayISO, activate, buildSchedule, completeCourse, uncompleteCourse, initializeCoursePlan, migrateState, reschedule, validateState } from './core.mjs';
+import { clone, DAY, localDay, dayISO, activate, buildSchedule, completeCourse, uncompleteCourse, initializeCoursePlan, migrateState, reschedule, validateState, trackCourses } from './core.mjs';
 
 export function createState(plan, now = new Date(), start = dayISO(localDay(now, plan))) {
   const began = new Date(Date.parse(start) - plan.TimeZoneOffsetMinutes * 60000).toISOString();
-  const state = { SchemaVersion:2, TrackStarted:Object.fromEntries(plan.Tracks.map(t=>[t.Id,began])), TrackPlanStart:Object.fromEntries(plan.Tracks.map(t=>[t.Id,start])), CoursePlanStart:{}, CourseStarted:{}, CourseCompleted:{}, Progress:{}, ProgressBeforeComplete:{}, SelectedId:plan.Courses[0].Id, ReminderCursor:0, Program:'technological', NotificationsEnabled:false, NextNotificationUtc:null, SnoozeUtc:null, SubscriptionEndDate:plan.SubscriptionEndDate ?? null, ApplicationStartDate:plan.ApplicationStartDate ?? null, ApplicationEndDate:plan.ApplicationEndDate ?? null };
+  const state = { SchemaVersion:3, TrackStarted:Object.fromEntries(plan.Tracks.map(t=>[t.Id,began])), TrackPlanStart:Object.fromEntries(plan.Tracks.map(t=>[t.Id,start])), CoursePlanStart:{}, CourseStarted:{}, CourseCompleted:{}, Progress:{}, ProgressBeforeComplete:{}, SelectedId:plan.Courses[0].Id, ReminderCursor:0, Program:'technological', NotificationsEnabled:false, NextNotificationUtc:null, SnoozeUtc:null, SubscriptionEndDate:plan.SubscriptionEndDate ?? null, ApplicationStartDate:plan.ApplicationStartDate ?? null, ApplicationEndDate:plan.ApplicationEndDate ?? null };
   initializeCoursePlan(plan, state);
+  migrateState(plan, state);
   activate(plan, state, now);
   return state;
 }
 export function effectivePlan(plan, state) {
-  return state.Program === 'general' ? {...plan, Tracks:plan.Tracks.filter(t=>t.Id!=='entrepreneurship'), Courses:plan.Courses.filter(c=>c.TrackId!=='entrepreneurship')} : plan;
+  const Tracks=state.Program==='general'?plan.Tracks.filter(t=>t.Id!=='entrepreneurship'):plan.Tracks;
+  const Courses=Tracks.flatMap(t=>trackCourses(plan,state,t.Id));
+  return {...plan,Tracks,Courses};
 }
 export function snapshot(plan, profile, now = new Date(), pushReady = false) {
   const current = effectivePlan(plan, profile.state);
@@ -25,6 +28,11 @@ export function applyAction(plan, original, input, now = new Date()) {
     case 'progress':
       if(!course || state.CourseCompleted[input.id] || !Number.isInteger(input.value) || input.value<0 || input.value>100)throw new Error('Укажите процент от 0 до 100 для непройденного модуля.');
       state.Progress[input.id]=input.value;break;
+    case 'defer':
+      if(!course || course.Availability!=='unconfirmed' || state.CourseCompleted[input.id] || typeof input.value!=='boolean')throw new Error('Этот модуль нельзя отложить.');
+      state.DeferredCourses ||= {};
+      if(input.value)state.DeferredCourses[input.id]=true;else delete state.DeferredCourses[input.id];
+      break;
     case 'settings':
       if(!['technological','general'].includes(input.program))throw new Error('Неизвестная программа.');
       for(const entry of input.dates || [])reschedule(plan,state,entry.value,entry.id);

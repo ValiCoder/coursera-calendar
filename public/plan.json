@@ -1,1 +1,721 @@
-{"SchemaVersion":1,"SchedulingMode":"parallel-tracks-hourly-modules","TimeZoneOffsetMinutes":300,"ReminderMinutes":30,"StartDate":"2026-10-07","Tracks":[{"Id":"qa","Title":"Software Quality Assurance and Testing","Credits":5,"MinimumDays":25,"ReserveDays":2},{"Id":"security","Title":"Information Security Fundamentals","Credits":5,"MinimumDays":25,"ReserveDays":2},{"Id":"architecture","Title":"Software Architecture","Credits":5,"MinimumDays":25,"ReserveDays":2},{"Id":"entrepreneurship","Title":"Technological Entrepreneurship","Credits":5,"MinimumDays":25,"ReserveDays":2}],"Courses":[{"Id":"qa-quality-testing","TrackId":"qa","Title":"Introduction to Software Quality Assurance","Url":"https://www.coursera.org/learn/introduction-to-software-quality-assurance","Hours":13,"RecommendedDays":2,"Note":"Отдельный курс из Software Quality Assurance and Testing. Часы по присланному PDF. "},{"Id":"qa-practical-testing","TrackId":"qa","Title":"Practical Software Testing","Url":"https://www.coursera.org/learn/practical-software-testing","Hours":13,"RecommendedDays":2,"Note":"Отдельный курс из Software Quality Assurance and Testing. Часы по присланному PDF. "},{"Id":"qa-modern-testing-tools","TrackId":"qa","Title":"Automation and Modern Testing Tools","Url":"https://www.coursera.org/learn/automation-and-modern-testing-tools","Hours":27,"RecommendedDays":3,"Note":"Отдельный курс из Software Quality Assurance and Testing. Часы по присланному PDF. "},{"Id":"qa-advanced-capstone","TrackId":"qa","Title":"Advanced Quality and Capstone Project","Url":"https://www.coursera.org/learn/advanced-quality-and-capstone-project","Hours":14,"RecommendedDays":2,"Note":"Отдельный курс из Software Quality Assurance and Testing. Часы по присланному PDF. "},{"Id":"qa-testing-automation","TrackId":"qa","Title":"Introduction to Software Testing","Url":"https://www.coursera.org/learn/introduction-software-testing","Hours":30,"RecommendedDays":3,"Note":"Отдельный курс из Software Testing and Automation. Часы по присланному PDF. "},{"Id":"qa-black-white-box","TrackId":"qa","Title":"Black-box and White-box Testing","Url":"https://www.coursera.org/learn/black-box-white-box-testing","Hours":26,"RecommendedDays":3,"Note":"Отдельный курс из Software Testing and Automation. Часы по присланному PDF. "},{"Id":"qa-automated-analysis","TrackId":"qa","Title":"Introduction to Automated Analysis","Url":"https://www.coursera.org/learn/automated-analysis","Hours":19,"RecommendedDays":2,"Note":"Отдельный курс из Software Testing and Automation. Часы по присланному PDF. "},{"Id":"qa-web-mobile-testing","TrackId":"qa","Title":"Web and Mobile Testing with Selenium","Url":"https://www.coursera.org/learn/web-mobile-testing","Hours":20,"RecommendedDays":2,"Note":"Отдельный курс из Software Testing and Automation. Часы по присланному PDF. "},{"Id":"qa-istqb","TrackId":"qa","Title":"ISTQB CTFL Preparation","Url":"https://www.coursera.org/specializations/istqb-ctfl-prep","Hours":49,"RecommendedDays":5,"Note":"Специализация: содержит несколько отдельных курсов."},{"Id":"security-analyst","TrackId":"security","Title":"Security Analyst Fundamentals","Url":"https://www.coursera.org/specializations/security-analyst-fundamentals","Hours":38,"RecommendedDays":4,"Note":"Специализация: содержит несколько отдельных курсов."},{"Id":"security-it-fundamentals","TrackId":"security","Title":"IT Fundamentals for Cybersecurity","Url":"https://www.coursera.org/specializations/it-fundamentals-cybersecurity","Hours":54,"RecommendedDays":5,"Note":"Специализация: содержит несколько отдельных курсов."},{"Id":"security-fundamentals","TrackId":"security","Title":"Cybersecurity Fundamentals","Url":"https://www.coursera.org/specializations/cybersecurity-fundamentals","Hours":48,"RecommendedDays":4,"Note":"Специализация: содержит несколько отдельных курсов."},{"Id":"security-ec-council","TrackId":"security","Title":"EC-Council Information Security Analyst","Url":"https://www.coursera.org/professional-certificates/ec-council-information-security-analyst","Hours":136,"RecommendedDays":12,"Note":"Профессиональный сертификат: содержит несколько отдельных курсов."},{"Id":"architecture-design","TrackId":"architecture","Title":"Object-Oriented Design","Url":"https://www.coursera.org/learn/object-oriented-design","Hours":17,"RecommendedDays":2,"Note":"Отдельный курс из Software Design and Architecture. Часы по присланному PDF. "},{"Id":"architecture-design-patterns","TrackId":"architecture","Title":"Design Patterns","Url":"https://www.coursera.org/learn/design-patterns","Hours":15,"RecommendedDays":2,"Note":"Отдельный курс из Software Design and Architecture. Часы по присланному PDF. "},{"Id":"architecture-course","TrackId":"architecture","Title":"Software Architecture","Url":"https://www.coursera.org/learn/software-architecture","Hours":9,"RecommendedDays":1,"Note":"Отдельный курс из Software Design and Architecture. Часы по присланному PDF. Повторная отдельная позиция объединена с этим курсом."},{"Id":"architecture-service-oriented","TrackId":"architecture","Title":"Service-Oriented Architecture","Url":"https://www.coursera.org/learn/service-oriented-architecture","Hours":9,"RecommendedDays":1,"Note":"Отдельный курс из Software Design and Architecture. Часы по присланному PDF. "},{"Id":"architecture-engineering","TrackId":"architecture","Title":"Introduction to Software Engineering","Url":"https://www.coursera.org/learn/introduction-to-software-engineering","Hours":11,"RecommendedDays":1,"Note":"Рекомендованные дни — ориентир для планирования; минимальный срок установлен для всей дисциплины."},{"Id":"architecture-big-data","TrackId":"architecture","Title":"Fundamentals of Software Architecture for Big Data","Url":"https://www.coursera.org/learn/software-architecture-for-big-data-fundamentals","Hours":20,"RecommendedDays":2,"Note":"Отдельный курс из Software Architecture for Big Data. Часы по присланному PDF. "},{"Id":"architecture-big-data-patterns","TrackId":"architecture","Title":"Software Architecture Patterns for Big Data","Url":"https://www.coursera.org/learn/software-architecture-patterns-for-big-data","Hours":25,"RecommendedDays":3,"Note":"Отдельный курс из Software Architecture for Big Data. Часы по присланному PDF. "},{"Id":"architecture-big-data-applications","TrackId":"architecture","Title":"Applications of Software Architecture for Big Data","Url":"https://www.coursera.org/learn/software-architecture-for-big-data-applications","Hours":17,"RecommendedDays":2,"Note":"Отдельный курс из Software Architecture for Big Data. Часы по присланному PDF. "},{"Id":"architecture-microservices","TrackId":"architecture","Title":"Software Architecture Foundations & Intro to Microservices","Url":"https://www.coursera.org/learn/packt-software-architecture-foundations-and-intro-to-microservices-l0tqw","Hours":9,"RecommendedDays":1,"Note":"Отдельный курс из Microservices Architecture: Design Patterns & Principles. Часы по присланному PDF. Текущее название на Coursera: Foundations of Software Architecture and Monolithic Systems."},{"Id":"architecture-microservices-design","TrackId":"architecture","Title":"Microservices Design, Communication, and Data Handling","Url":"https://www.coursera.org/learn/packt-microservices-design-communication-and-data-handling-jwxt9","Hours":12,"RecommendedDays":1,"Note":"Отдельный курс из Microservices Architecture: Design Patterns & Principles. Часы по присланному PDF. Текущее название на Coursera: Microservices Architecture and Communication Patterns."},{"Id":"architecture-microservices-advanced","TrackId":"architecture","Title":"Advanced Microservices Architecture, Deployment & Resilience","Url":"https://www.coursera.org/learn/packt-advanced-microservices-architecture-deployment-and-resilience-lnjeb","Hours":9,"RecommendedDays":1,"Note":"Отдельный курс из Microservices Architecture: Design Patterns & Principles. Часы по присланному PDF. Текущее название на Coursera: Advanced Microservices: Transactions, Deployment, and Reliability."},{"Id":"architecture-api-start","TrackId":"architecture","Title":"Getting Started with APIs","Url":"https://www.coursera.org/learn/getting-started-with-apis","Hours":9,"RecommendedDays":1,"Note":"Отдельный курс Edureka, добавлен из присланного PDF. Часы по PDF; полная специализация API Development and Architecture не добавляется."},{"Id":"architecture-api-security","TrackId":"architecture","Title":"Protecting and Managing APIs","Url":"https://www.coursera.org/learn/protecting-and-managing-apis","Hours":11,"RecommendedDays":1,"Note":"Отдельный курс Edureka, добавлен из присланного PDF. Часы по PDF; полная специализация API Development and Architecture не добавляется."},{"Id":"entrepreneurship-scaleup","TrackId":"entrepreneurship","Title":"Scale Up Your Startup","Url":"https://www.coursera.org/specializations/scaleup-specialization","Hours":29,"RecommendedDays":3,"Note":"Пройдите все курсы специализации в порядке Coursera. Часы сохранены из вашего списка."},{"Id":"entrepreneurship-educate","TrackId":"entrepreneurship","Title":"Educate Skills for Startups","Url":"https://www.coursera.org/specializations/educate-for-startups","Hours":21,"RecommendedDays":2,"Note":"Validate New Ideas for Startups, затем Pitching, Marketing and Sales For Startups. Часы сохранены из вашего списка."},{"Id":"entrepreneurship-it","TrackId":"entrepreneurship","Title":"Information Technology Entrepreneurship & Startup","Url":"https://www.coursera.org/specializations/it-entrepreneurship-startup","Hours":47,"RecommendedDays":4,"Note":"Getting Started, затем The Ideation Process, Market Analysis и Business Model & Product Pitch."},{"Id":"entrepreneurship-business-model","TrackId":"entrepreneurship","Title":"Business Model for Entrepreneurs","Url":"https://www.coursera.org/learn/business-model-entrepreneurs","Hours":14,"RecommendedDays":2,"Note":"Отдельный курс EDUCBA. Часы сохранены из вашего списка."},{"Id":"entrepreneurship-launching","TrackId":"entrepreneurship","Title":"Entrepreneurship: Launching an Innovative Business","Url":"https://www.coursera.org/specializations/business-entrepreneurship","Hours":35,"RecommendedDays":3,"Note":"Пройдите все курсы специализации в порядке Coursera. Часы сохранены из вашего списка."},{"Id":"entrepreneurship-pr","TrackId":"entrepreneurship","Title":"Introduction to Public Relations and the Media","Url":"https://www.coursera.org/specializations/introduction-to-public-relations-and-the-media","Hours":20,"RecommendedDays":2,"Note":"Principles of Public Relations, затем Working with the Media и The Nuts and Bolts of Public Relations."}],"StudyHoursPerDay":12,"SubscriptionEndDate":"2026-11-05","ApplicationStartDate":"2026-11-01","ApplicationEndDate":"2026-11-09"}
+{
+  "SchemaVersion": 1,
+  "SchedulingMode": "parallel-tracks-hourly-modules",
+  "TimeZoneOffsetMinutes": 300,
+  "ReminderMinutes": 30,
+  "StartDate": "2026-10-07",
+  "SubscriptionEndDate": "2026-11-05",
+  "ApplicationStartDate": "2026-11-01",
+  "ApplicationEndDate": "2026-11-09",
+  "Tracks": [
+    {
+      "Id": "qa",
+      "Title": "Software Quality Assurance and Testing",
+      "Credits": 5,
+      "MinimumDays": 25,
+      "ReserveDays": 2
+    },
+    {
+      "Id": "security",
+      "Title": "Information Security Fundamentals",
+      "Credits": 5,
+      "MinimumDays": 25,
+      "ReserveDays": 2
+    },
+    {
+      "Id": "architecture",
+      "Title": "Software Architecture",
+      "Credits": 5,
+      "MinimumDays": 25,
+      "ReserveDays": 2
+    },
+    {
+      "Id": "entrepreneurship",
+      "Title": "Technological Entrepreneurship",
+      "Credits": 5,
+      "MinimumDays": 25,
+      "ReserveDays": 2,
+      "Program": "technological"
+    }
+  ],
+  "Courses": [
+    {
+      "Id": "qa-quality-testing",
+      "TrackId": "qa",
+      "Title": "Introduction to Software Quality Assurance",
+      "Url": "https://www.coursera.org/learn/introduction-to-software-quality-assurance",
+      "Hours": 13,
+      "RecommendedDays": 2,
+      "Note": "Отдельный курс из Software Quality Assurance and Testing. Часы по присланному PDF. ",
+      "IncludedCourses": [
+        {
+          "Title": "Introduction to Software Quality Assurance",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "qa-practical-testing",
+      "TrackId": "qa",
+      "Title": "Practical Software Testing",
+      "Url": "https://www.coursera.org/learn/practical-software-testing",
+      "Hours": 13,
+      "RecommendedDays": 2,
+      "Note": "Отдельный курс из Software Quality Assurance and Testing. Часы по присланному PDF. ",
+      "IncludedCourses": [
+        {
+          "Title": "Practical Software Testing",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "qa-modern-testing-tools",
+      "TrackId": "qa",
+      "Title": "Automation and Modern Testing Tools",
+      "Url": "https://www.coursera.org/learn/automation-and-modern-testing-tools",
+      "Hours": 27,
+      "RecommendedDays": 3,
+      "Note": "Отдельный курс из Software Quality Assurance and Testing. Часы по присланному PDF. ",
+      "IncludedCourses": [
+        {
+          "Title": "Automation and Modern Testing Tools",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "qa-advanced-capstone",
+      "TrackId": "qa",
+      "Title": "Advanced Quality and Capstone Project",
+      "Url": "https://www.coursera.org/learn/advanced-quality-and-capstone-project",
+      "Hours": 14,
+      "RecommendedDays": 2,
+      "Note": "Отдельный курс из Software Quality Assurance and Testing. Часы по присланному PDF. ",
+      "IncludedCourses": [
+        {
+          "Title": "Advanced Quality and Capstone Project",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "qa-testing-automation",
+      "TrackId": "qa",
+      "Title": "Introduction to Software Testing",
+      "Url": "https://www.coursera.org/learn/introduction-software-testing",
+      "Hours": 30,
+      "RecommendedDays": 3,
+      "Note": "Отдельный курс из Software Testing and Automation. Часы по присланному PDF. ",
+      "IncludedCourses": [
+        {
+          "Title": "Introduction to Software Testing",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "qa-black-white-box",
+      "TrackId": "qa",
+      "Title": "Black-box and White-box Testing",
+      "Url": "https://www.coursera.org/learn/black-box-white-box-testing",
+      "Hours": 26,
+      "RecommendedDays": 3,
+      "Note": "Отдельный курс из Software Testing and Automation. Часы по присланному PDF. ",
+      "IncludedCourses": [
+        {
+          "Title": "Black-box and White-box Testing",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "qa-automated-analysis",
+      "TrackId": "qa",
+      "Title": "Introduction to Automated Analysis",
+      "Url": "https://www.coursera.org/learn/automated-analysis",
+      "Hours": 19,
+      "RecommendedDays": 2,
+      "Note": "Отдельный курс из Software Testing and Automation. Часы по присланному PDF. ",
+      "IncludedCourses": [
+        {
+          "Title": "Introduction to Automated Analysis",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "qa-web-mobile-testing",
+      "TrackId": "qa",
+      "Title": "Web and Mobile Testing with Selenium",
+      "Url": "https://www.coursera.org/learn/web-mobile-testing",
+      "Hours": 20,
+      "RecommendedDays": 2,
+      "Note": "Отдельный курс из Software Testing and Automation. Часы по присланному PDF. ",
+      "IncludedCourses": [
+        {
+          "Title": "Web and Mobile Testing with Selenium",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "qa-istqb",
+      "TrackId": "qa",
+      "Title": "ISTQB CTFL Preparation",
+      "Url": "https://www.coursera.org/specializations/istqb-ctfl-prep",
+      "Hours": 49,
+      "RecommendedDays": 5,
+      "Note": "Специализация: содержит несколько отдельных курсов.",
+      "IncludedCourses": [
+        {
+          "Title": "Fundamentals of Static Testing",
+          "InCreditPlan": false
+        },
+        {
+          "Title": "Essential Testing Techniques in Software Development",
+          "InCreditPlan": false
+        },
+        {
+          "Title": "Mastering Test Management and Tools",
+          "InCreditPlan": false
+        }
+      ],
+      "CreditPlanRole": "additional"
+    },
+    {
+      "Id": "security-analyst",
+      "TrackId": "security",
+      "Title": "Security Analyst Fundamentals",
+      "Url": "https://www.coursera.org/specializations/security-analyst-fundamentals",
+      "Hours": 38,
+      "RecommendedDays": 4,
+      "Note": "Специализация: содержит несколько отдельных курсов.",
+      "IncludedCourses": [
+        {
+          "Title": "Penetration Testing, Threat Hunting, and Cryptography",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "Incident Response and Digital Forensics",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "Cybersecurity Case Studies and Capstone Project",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "security-it-fundamentals",
+      "TrackId": "security",
+      "Title": "IT Fundamentals for Cybersecurity",
+      "Url": "https://www.coursera.org/specializations/it-fundamentals-cybersecurity",
+      "Hours": 54,
+      "RecommendedDays": 5,
+      "Note": "Специализация: содержит несколько отдельных курсов.",
+      "IncludedCourses": [
+        {
+          "Title": "Introduction to Cybersecurity Tools & Cyberattacks",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "Operating Systems: Overview, Administration, and Security",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "Cybersecurity Compliance Framework, Standards & Regulations",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "Computer Networks and Network Security",
+          "InCreditPlan": false
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "security-fundamentals",
+      "TrackId": "security",
+      "Title": "Cybersecurity Fundamentals",
+      "Url": "https://www.coursera.org/specializations/cybersecurity-fundamentals",
+      "Hours": 48,
+      "RecommendedDays": 4,
+      "Note": "Специализация: содержит несколько отдельных курсов.",
+      "IncludedCourses": [
+        {
+          "Title": "Introduction to Cybersecurity Essentials",
+          "InCreditPlan": false
+        },
+        {
+          "Title": "Cybersecurity Architecture",
+          "InCreditPlan": false
+        },
+        {
+          "Title": "Encryption and Cryptography Essentials",
+          "InCreditPlan": false
+        },
+        {
+          "Title": "Introduction to Cybersecurity Careers",
+          "InCreditPlan": false
+        }
+      ],
+      "CreditPlanRole": "additional"
+    },
+    {
+      "Id": "security-ec-council",
+      "TrackId": "security",
+      "Title": "EC-Council Information Security Analyst",
+      "Url": "https://www.coursera.org/professional-certificates/ec-council-information-security-analyst",
+      "Hours": 136,
+      "RecommendedDays": 12,
+      "Note": "Профессиональный сертификат: содержит несколько отдельных курсов.",
+      "IncludedCourses": [
+        {
+          "Title": "Information Security Fundamentals",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "Ethical Hacking Essentials: Hands-On Edition",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "Network Defense Essentials: Hands-On Edition",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "Digital Forensics Essentials: Hands-On Edition",
+          "InCreditPlan": false
+        },
+        {
+          "Title": "Into the Trenches: Security Operations Center",
+          "InCreditPlan": false
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "architecture-design",
+      "TrackId": "architecture",
+      "Title": "Object-Oriented Design",
+      "Url": "https://www.coursera.org/learn/object-oriented-design",
+      "Hours": 17,
+      "RecommendedDays": 2,
+      "Note": "Отдельный курс из Software Design and Architecture. Часы по присланному PDF. ",
+      "IncludedCourses": [
+        {
+          "Title": "Object-Oriented Design",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "architecture-design-patterns",
+      "TrackId": "architecture",
+      "Title": "Design Patterns",
+      "Url": "https://www.coursera.org/learn/design-patterns",
+      "Hours": 15,
+      "RecommendedDays": 2,
+      "Note": "Отдельный курс из Software Design and Architecture. Часы по присланному PDF. ",
+      "IncludedCourses": [
+        {
+          "Title": "Design Patterns",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "architecture-course",
+      "TrackId": "architecture",
+      "Title": "Software Architecture",
+      "Url": "https://www.coursera.org/learn/software-architecture",
+      "Hours": 9,
+      "RecommendedDays": 1,
+      "Note": "Отдельный курс из Software Design and Architecture. Часы по присланному PDF. Повторная отдельная позиция объединена с этим курсом.",
+      "IncludedCourses": [
+        {
+          "Title": "Software Architecture",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "architecture-service-oriented",
+      "TrackId": "architecture",
+      "Title": "Service-Oriented Architecture",
+      "Url": "https://www.coursera.org/learn/service-oriented-architecture",
+      "Hours": 9,
+      "RecommendedDays": 1,
+      "Note": "Отдельный курс из Software Design and Architecture. Часы по присланному PDF. ",
+      "IncludedCourses": [
+        {
+          "Title": "Service-Oriented Architecture",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "architecture-engineering",
+      "TrackId": "architecture",
+      "Title": "Introduction to Software Engineering",
+      "Url": "https://www.coursera.org/learn/introduction-to-software-engineering",
+      "Hours": 11,
+      "RecommendedDays": 1,
+      "Note": "Рекомендованные дни — ориентир для планирования; минимальный срок установлен для всей дисциплины.",
+      "IncludedCourses": [
+        {
+          "Title": "Introduction to Software Engineering",
+          "InCreditPlan": false
+        }
+      ],
+      "CreditPlanRole": "additional"
+    },
+    {
+      "Id": "architecture-big-data",
+      "TrackId": "architecture",
+      "Title": "Fundamentals of Software Architecture for Big Data",
+      "Url": "https://www.coursera.org/learn/software-architecture-for-big-data-fundamentals",
+      "Hours": 20,
+      "RecommendedDays": 2,
+      "Note": "Отдельный курс из Software Architecture for Big Data. Часы по присланному PDF. ",
+      "IncludedCourses": [
+        {
+          "Title": "Fundamentals of Software Architecture for Big Data",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "architecture-big-data-patterns",
+      "TrackId": "architecture",
+      "Title": "Software Architecture Patterns for Big Data",
+      "Url": "https://www.coursera.org/learn/software-architecture-patterns-for-big-data",
+      "Hours": 25,
+      "RecommendedDays": 3,
+      "Note": "Отдельный курс из Software Architecture for Big Data. Часы по присланному PDF. ",
+      "IncludedCourses": [
+        {
+          "Title": "Software Architecture Patterns for Big Data",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "architecture-big-data-applications",
+      "TrackId": "architecture",
+      "Title": "Applications of Software Architecture for Big Data",
+      "Url": "https://www.coursera.org/learn/software-architecture-for-big-data-applications",
+      "Hours": 17,
+      "RecommendedDays": 2,
+      "Note": "Отдельный курс из Software Architecture for Big Data. Часы по присланному PDF. ",
+      "IncludedCourses": [
+        {
+          "Title": "Applications of Software Architecture for Big Data",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "architecture-microservices",
+      "TrackId": "architecture",
+      "Title": "Software Architecture Foundations & Intro to Microservices",
+      "Url": "https://www.coursera.org/learn/packt-software-architecture-foundations-and-intro-to-microservices-l0tqw",
+      "Hours": 9,
+      "RecommendedDays": 1,
+      "Note": "Отдельный курс из Microservices Architecture: Design Patterns & Principles. Часы по присланному PDF. Текущее название на Coursera: Foundations of Software Architecture and Monolithic Systems.",
+      "IncludedCourses": [
+        {
+          "Title": "Software Architecture Foundations & Intro to Microservices",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "architecture-microservices-design",
+      "TrackId": "architecture",
+      "Title": "Microservices Design, Communication, and Data Handling",
+      "Url": "https://www.coursera.org/learn/packt-microservices-design-communication-and-data-handling-jwxt9",
+      "Hours": 12,
+      "RecommendedDays": 1,
+      "Note": "Отдельный курс из Microservices Architecture: Design Patterns & Principles. Часы по присланному PDF. Текущее название на Coursera: Microservices Architecture and Communication Patterns.",
+      "IncludedCourses": [
+        {
+          "Title": "Microservices Design, Communication, and Data Handling",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "architecture-microservices-advanced",
+      "TrackId": "architecture",
+      "Title": "Advanced Microservices Architecture, Deployment & Resilience",
+      "Url": "https://www.coursera.org/learn/packt-advanced-microservices-architecture-deployment-and-resilience-lnjeb",
+      "Hours": 9,
+      "RecommendedDays": 1,
+      "Note": "Отдельный курс из Microservices Architecture: Design Patterns & Principles. Часы по присланному PDF. Текущее название на Coursera: Advanced Microservices: Transactions, Deployment, and Reliability.",
+      "IncludedCourses": [
+        {
+          "Title": "Advanced Microservices Architecture, Deployment & Resilience",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "architecture-api-start",
+      "TrackId": "architecture",
+      "Title": "Getting Started with APIs",
+      "Url": "https://www.coursera.org/learn/getting-started-with-apis",
+      "Hours": 9,
+      "RecommendedDays": 1,
+      "Note": "Отдельный курс Edureka, добавлен из присланного PDF. Часы по PDF; полная специализация API Development and Architecture не добавляется.",
+      "IncludedCourses": [
+        {
+          "Title": "Getting Started with APIs",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "architecture-api-security",
+      "TrackId": "architecture",
+      "Title": "Protecting and Managing APIs",
+      "Url": "https://www.coursera.org/learn/protecting-and-managing-apis",
+      "Hours": 11,
+      "RecommendedDays": 1,
+      "Note": "Отдельный курс Edureka, добавлен из присланного PDF. Часы по PDF; полная специализация API Development and Architecture не добавляется.",
+      "IncludedCourses": [
+        {
+          "Title": "Protecting and Managing APIs",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "entrepreneurship-scaleup",
+      "TrackId": "entrepreneurship",
+      "Title": "Scale Up Your Startup",
+      "Url": "https://www.coursera.org/specializations/scaleup-specialization",
+      "Hours": 29,
+      "RecommendedDays": 3,
+      "Note": "Пройдите все курсы специализации в порядке Coursera. Часы сохранены из вашего списка.",
+      "Program": "technological",
+      "IncludedCourses": [
+        {
+          "Title": "Why Scale a Startup?",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "Scaling Product and Processes",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "Building Culture in a Scale Up",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "Scale Up Specialization Capstone",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "entrepreneurship-educate",
+      "TrackId": "entrepreneurship",
+      "Title": "Educate Skills for Startups",
+      "Url": "https://www.coursera.org/specializations/educate-for-startups",
+      "Hours": 21,
+      "RecommendedDays": 2,
+      "Note": "В расчёте PDF два курса: Validate New Ideas for Startups и Pitching, Marketing and Sales For Startups. Их страницы сейчас недоступны; регистрация не подтверждена. Блок сохранён в составе предмета. Если доступа нет, его можно отложить и продолжить остальные курсы.",
+      "Program": "technological",
+      "IncludedCourses": [
+        {
+          "Title": "Validate New Ideas for Startups",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "Pitching, Marketing and Sales For Startups",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required",
+      "Availability": "unconfirmed"
+    },
+    {
+      "Id": "entrepreneurship-it",
+      "TrackId": "entrepreneurship",
+      "Title": "Information Technology Entrepreneurship & Startup",
+      "Url": "https://www.coursera.org/specializations/it-entrepreneurship-startup",
+      "Hours": 47,
+      "RecommendedDays": 4,
+      "Note": "Getting Started, затем The Ideation Process, Market Analysis и Business Model & Product Pitch.",
+      "Program": "technological",
+      "IncludedCourses": [
+        {
+          "Title": "Getting Started with IT-based Entrepreneurship",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "The Ideation Process",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "Market Analysis",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "Business Model & Product Pitch",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "entrepreneurship-business-model",
+      "TrackId": "entrepreneurship",
+      "Title": "Business Model for Entrepreneurs",
+      "Url": "https://www.coursera.org/learn/business-model-entrepreneurs",
+      "Hours": 14,
+      "RecommendedDays": 2,
+      "Note": "Отдельный курс EDUCBA. Часы сохранены из вашего списка.",
+      "Program": "technological",
+      "IncludedCourses": [
+        {
+          "Title": "Business Model for Entrepreneurs",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "entrepreneurship-launching",
+      "TrackId": "entrepreneurship",
+      "Title": "Entrepreneurship: Launching an Innovative Business",
+      "Url": "https://www.coursera.org/specializations/business-entrepreneurship",
+      "Hours": 35,
+      "RecommendedDays": 3,
+      "Note": "Пройдите все курсы специализации в порядке Coursera. Часы сохранены из вашего списка.",
+      "Program": "technological",
+      "IncludedCourses": [
+        {
+          "Title": "Developing Innovative Ideas for New Companies: The First Step in Entrepreneurship",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "Innovation for Entrepreneurs: From Idea to Marketplace",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "New Venture Finance: Startup Funding for Entrepreneurs",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "Entrepreneurship Capstone",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    },
+    {
+      "Id": "entrepreneurship-pr",
+      "TrackId": "entrepreneurship",
+      "Title": "Introduction to Public Relations and the Media",
+      "Url": "https://www.coursera.org/specializations/introduction-to-public-relations-and-the-media",
+      "Hours": 20,
+      "RecommendedDays": 2,
+      "Note": "Principles of Public Relations, затем Working with the Media и The Nuts and Bolts of Public Relations.",
+      "Program": "technological",
+      "IncludedCourses": [
+        {
+          "Title": "Principles of Public Relations",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "Working with the Media",
+          "InCreditPlan": true
+        },
+        {
+          "Title": "The Nuts and Bolts of Public Relations",
+          "InCreditPlan": true
+        }
+      ],
+      "CreditPlanRole": "required"
+    }
+  ],
+  "StudyHoursPerDay": 12,
+  "PlanningRevision": 1,
+  "ReorderAfterDate": "2026-10-10",
+  "FutureCourseOrder": {
+    "qa": [
+      "qa-quality-testing",
+      "qa-practical-testing",
+      "qa-modern-testing-tools",
+      "qa-advanced-capstone",
+      "qa-testing-automation",
+      "qa-black-white-box",
+      "qa-automated-analysis",
+      "qa-web-mobile-testing",
+      "qa-istqb"
+    ],
+    "security": [
+      "security-analyst",
+      "security-it-fundamentals",
+      "security-ec-council",
+      "security-fundamentals"
+    ],
+    "architecture": [
+      "architecture-api-start",
+      "architecture-api-security",
+      "architecture-design",
+      "architecture-design-patterns",
+      "architecture-course",
+      "architecture-service-oriented",
+      "architecture-big-data",
+      "architecture-big-data-patterns",
+      "architecture-big-data-applications",
+      "architecture-microservices",
+      "architecture-microservices-design",
+      "architecture-microservices-advanced",
+      "architecture-engineering"
+    ],
+    "entrepreneurship": [
+      "entrepreneurship-scaleup",
+      "entrepreneurship-it",
+      "entrepreneurship-business-model",
+      "entrepreneurship-launching",
+      "entrepreneurship-pr",
+      "entrepreneurship-educate"
+    ]
+  },
+  "Programs": {
+    "technological": {
+      "Title": "Technological Entrepreneurship",
+      "Status": "ready"
+    },
+    "general": {
+      "Title": "Entrepreneurship",
+      "Status": "awaiting-course-list"
+    }
+  }
+}
