@@ -290,7 +290,7 @@ test('the expanded catalogue contains all 47 PDF courses and keeps entrepreneurs
   }
   assert.equal(required.length, 47);
   assert.equal(new Set(required).size, 47);
-  assert.equal(legacyPlan.Courses.reduce((sum, c) => sum + c.Hours, 0), 826);
+  assert.equal(legacyPlan.Courses.reduce((sum, c) => sum + c.Hours, 0), 832);
   assert.ok(legacyPlan.Courses.filter(c => c.TrackId === 'entrepreneurship').every(c => c.Program === 'technological'));
   assert.equal(legacyPlan.Programs.general.Status, 'awaiting-course-list');
   const state = legacyState();state.Program = 'general';

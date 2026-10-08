@@ -1,6 +1,6 @@
-import { snapshot } from './profile.mjs?v=5';
-import { reminderTarget, importantDates } from './core.mjs?v=5';
-import { readProfile, changeProfile, claimReminder } from './storage.mjs?v=5';
+import { snapshot } from './profile.mjs?v=6';
+import { reminderTarget, importantDates } from './core.mjs?v=6';
+import { readProfile, changeProfile, claimReminder } from './storage.mjs?v=6';
 const $ = id => document.getElementById(id);
 let data, plan, selected, view = 'calendar', weekStart = null, completeId, completeMode = 'complete', dirtySettings = false, swRegistration, calendarStart, calendarEnd;
 const colors = {qa:['#2463df','#e3edff','Тестирование'], security:['#24a38b','#e3f3ef','Безопасность'], architecture:['#7e62d7','#eee9fb','Архитектура'], entrepreneurship:['#d29436','#fcf2df','Технологическое предпринимательство']};
@@ -61,7 +61,9 @@ function render() {
   $('current-courses').innerHTML = schedule.tracks.map(t=>{
     const totalHours=t.courses.reduce((sum,course)=>sum+course.Hours,0);
     const completedHours=t.courses.reduce((sum,course)=>sum+course.Hours*course.progress/100,0);
-    const subjectHours=`<div class="course-card-hours">Предмет: ${formatHours(totalHours)} ч · Пройдено: ${formatHours(completedHours)} ч</div>`;
+    const unavailableHours=t.courses.filter(course=>course.Availability==='unconfirmed').reduce((sum,course)=>sum+course.Hours,0);
+    const availableNote=unavailableHours?'<br>Без недоступного блока: '+formatHours(totalHours-unavailableHours)+' ч':'';
+    const subjectHours=`<div class="course-card-hours">Предмет: ${formatHours(totalHours)} ч · Пройдено: ${formatHours(completedHours)} ч${availableNote}</div>`;
     const c = t.courses.find(c=>c.active);
     if (!c) {
       const deferred=t.courses.filter(x=>x.status==='deferred');
@@ -290,7 +292,7 @@ async function registerWebMCP() {
 async function init() {
   try {
     if(sessionStorage.getItem('invite-dismissed'))$('notification-invite').hidden=true;
-    plan=await (await fetch('./plan.json?v=5',{cache:'no-cache'})).json();
+    plan=await (await fetch('./plan.json?v=6',{cache:'no-cache'})).json();
     if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').then(()=>navigator.serviceWorker.ready).then(r=>{swRegistration=r;}).catch(()=>{});}
     if(await load())registerWebMCP();
     setInterval(load,30000);setInterval(checkReminder,15000);

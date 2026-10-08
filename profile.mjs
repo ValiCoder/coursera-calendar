@@ -2,7 +2,7 @@ import { clone, DAY, localDay, dayISO, activate, buildSchedule, completeCourse, 
 
 export function createState(plan, now = new Date(), start = dayISO(localDay(now, plan))) {
   const began = new Date(Date.parse(start) - plan.TimeZoneOffsetMinutes * 60000).toISOString();
-  const state = { SchemaVersion:3, TrackStarted:Object.fromEntries(plan.Tracks.map(t=>[t.Id,began])), TrackPlanStart:Object.fromEntries(plan.Tracks.map(t=>[t.Id,start])), CoursePlanStart:{}, CourseStarted:{}, CourseCompleted:{}, Progress:{}, ProgressBeforeComplete:{}, SelectedId:plan.Courses[0].Id, ReminderCursor:0, Program:'technological', NotificationsEnabled:false, NextNotificationUtc:null, SnoozeUtc:null, SubscriptionEndDate:plan.SubscriptionEndDate ?? null, ApplicationStartDate:plan.ApplicationStartDate ?? null, ApplicationEndDate:plan.ApplicationEndDate ?? null };
+  const state = { SchemaVersion:4, TrackStarted:Object.fromEntries(plan.Tracks.map(t=>[t.Id,began])), TrackPlanStart:Object.fromEntries(plan.Tracks.map(t=>[t.Id,start])), CoursePlanStart:{}, CourseStarted:{}, CourseCompleted:{}, Progress:{}, ProgressBeforeComplete:{}, SelectedId:plan.Courses[0].Id, ReminderCursor:0, Program:'technological', NotificationsEnabled:false, NextNotificationUtc:null, SnoozeUtc:null, SubscriptionEndDate:plan.SubscriptionEndDate ?? null, ApplicationStartDate:plan.ApplicationStartDate ?? null, ApplicationEndDate:plan.ApplicationEndDate ?? null };
   initializeCoursePlan(plan, state);
   migrateState(plan, state);
   activate(plan, state, now);

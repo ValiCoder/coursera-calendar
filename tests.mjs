@@ -5,9 +5,9 @@ import { buildSchedule, completeCourse, reschedule, reminderTarget, validateStat
 import { createState, effectivePlan, applyAction } from './profile.mjs';
 const plan = JSON.parse(fs.readFileSync(new URL('./data/plan.json',import.meta.url),'utf8').replace(/^\uFEFF/,''));
 function fresh(){return createState(plan,new Date('2026-10-08T14:00Z'),'2026-10-07');}
-test('baseline matches all 32 modules and the saved 7 Oct–2 Nov schedule',()=>{
+test('baseline matches all 33 modules and the saved 7 Oct–2 Nov schedule',()=>{
   const s=buildSchedule(plan,fresh(),new Date('2026-10-08T14:00Z'));
-  assert.equal(s.tracks.flatMap(t=>t.courses).length,32);
+  assert.equal(s.tracks.flatMap(t=>t.courses).length,33);
   assert.equal(dayISO(s.start),'2026-10-07');assert.equal(dayISO(s.end),'2026-11-02');
   assert.equal(dayISO(s.tracks[0].courses[1].start),'2026-10-09');
   assert.equal(dayISO(s.tracks[2].courses[1].start),'2026-10-09');
@@ -74,8 +74,8 @@ test('general entrepreneurship hides its pending courses from actions and remind
  let state=applyAction(plan,fresh(),{type:'program',program:'general'}),current=effectivePlan(plan,state);
  assert.equal(current.Courses.length,26);assert.equal(current.Tracks.length,3);
  assert.throws(()=>applyAction(plan,state,{type:'complete',id:'entrepreneurship-scaleup'}),/Неизвестный/);
- for(let i=0;i<32;i++){state.ReminderCursor=i;assert.notEqual(reminderTarget(current,state,new Date('2026-10-08T14:00Z')).course.TrackId,'entrepreneurship');}
- state=applyAction(plan,state,{type:'program',program:'technological'});assert.equal(effectivePlan(plan,state).Courses.length,32);
+ for(let i=0;i<33;i++){state.ReminderCursor=i;assert.notEqual(reminderTarget(current,state,new Date('2026-10-08T14:00Z')).course.TrackId,'entrepreneurship');}
+ state=applyAction(plan,state,{type:'program',program:'technological'});assert.equal(effectivePlan(plan,state).Courses.length,33);
 });
 const ranges = schedule => schedule.tracks.map(t=>({id:t.Id,start:t.start,end:t.end,courses:t.courses.map(c=>({id:c.Id,start:c.start,end:c.end,days:c.days}))}));
 test('early and late completion preserve every bar length and every planned date',()=>{
@@ -122,7 +122,7 @@ test('legacy profiles recover shifted and compressed bars without losing progres
  state.CoursePlanStart={'qa-modern-testing-tools':'2026-10-08'};delete state.ProgressBeforeComplete;
  const completed=structuredClone(state.CourseCompleted),started=structuredClone(state.CourseStarted),progress=structuredClone(state.Progress);
  assert.equal(migrateState(plan,state),true);
- assert.equal(state.SchemaVersion,3);assert.equal(Object.keys(state.CoursePlanStart).length,32);
+ assert.equal(state.SchemaVersion,4);assert.equal(Object.keys(state.CoursePlanStart).length,33);
  assert.equal(state.CoursePlanStart['qa-practical-testing'],'2026-10-10');
  assert.equal(state.CoursePlanStart['qa-modern-testing-tools'],'2026-10-12');
  assert.equal(state.CoursePlanStart['security-analyst'],'2026-10-20');
@@ -150,7 +150,7 @@ test('completion across UTC+5 midnight records the fact separately from the plan
 
 test('new profiles seed personal subscription and application dates from the plan',()=>{
  const now=new Date('2026-10-09T12:00Z'),state=createState(plan,now);
- assert.equal(state.SchemaVersion,3);
+ assert.equal(state.SchemaVersion,4);
  assert.equal(state.SubscriptionEndDate,'2026-11-05');
  assert.equal(state.ApplicationStartDate,'2026-11-01');
  assert.equal(state.ApplicationEndDate,'2026-11-09');
@@ -164,7 +164,7 @@ test('new profiles seed personal subscription and application dates from the pla
  validateState(plan,state);
 });
 
-test('legacy schema 2 profiles use deadline defaults without rewriting their data',()=>{
+test('profiles without personal deadline fields use defaults without rewriting their data',()=>{
  const now=new Date('2026-10-09T12:00Z'),state=fresh();
  delete state.SubscriptionEndDate;delete state.ApplicationStartDate;delete state.ApplicationEndDate;
  const before=structuredClone(state);

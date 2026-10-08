@@ -66,7 +66,34 @@ export function migrateState(plan, state) {
     state.SchemaVersion = 2;
     changed = true;
   }
-  if (![2, 3].includes(state.SchemaVersion)) throw new Error('Неизвестная версия профиля. Данные сохранены.');
+  if (![2, 3, 4].includes(state.SchemaVersion)) throw new Error('Неизвестная версия профиля. Данные сохранены.');
+  if ((state.CatalogRevision || 0) < (plan.CatalogRevision || 0)) {
+    const additions = plan.Courses.filter(c => (c.AddedInCatalogRevision || 0) > (state.CatalogRevision || 0));
+    const addedIds = new Set(additions.map(c => c.Id));
+    state.CoursePlanStart ||= {};
+    state.CourseOrder ||= {};
+    for (const track of plan.Tracks) {
+      const added = additions.filter(c => c.TrackId === track.Id);
+      if (!added.length) continue;
+      const previous = trackCourses(plan, state, track.Id).filter(c => !addedIds.has(c.Id));
+      let boundary = planTrackStart(plan, state, track.Id);
+      for (const course of previous) {
+        const start = state.CoursePlanStart[course.Id] ? Math.floor(Date.parse(state.CoursePlanStart[course.Id]) / DAY) : boundary;
+        boundary = Math.max(boundary, start + courseDays(course, plan));
+      }
+      const cutoff = plan.ReorderAfterDate ? Math.floor(Date.parse(plan.ReorderAfterDate) / DAY) + 1 : boundary;
+      let cursor = Math.max(boundary, cutoff);
+      for (const course of added) {
+        const existing = state.CoursePlanStart[course.Id] ? Math.floor(Date.parse(state.CoursePlanStart[course.Id]) / DAY) : cursor;
+        const start = Math.max(cursor, existing);
+        state.CoursePlanStart[course.Id] = dayISO(start);
+        cursor = start + courseDays(course, plan);
+      }
+      state.CourseOrder[track.Id] = [...previous.map(c => c.Id), ...added.map(c => c.Id)];
+    }
+    state.CatalogRevision = plan.CatalogRevision;
+    changed = true;
+  }
   if ((state.PlanningRevision || 0) < (plan.PlanningRevision || 0)) {
     const cutoff = Math.floor(Date.parse(plan.ReorderAfterDate) / DAY);
     if (!Number.isFinite(cutoff)) throw new Error('Не задана дата обновления плана.');
@@ -98,7 +125,7 @@ export function migrateState(plan, state) {
     state.PlanningRevision = plan.PlanningRevision;
     changed = true;
   }
-  if (state.SchemaVersion === 2) { state.SchemaVersion = 3; changed = true; }
+  if (state.SchemaVersion !== 4) { state.SchemaVersion = 4; changed = true; }
   return changed;
 }
 export function activeCourse(plan, state, trackId) {
@@ -219,7 +246,7 @@ export function reminderTarget(plan, state, now = new Date()) {
 export function validateState(plan, state) {
   const ids = new Set(plan.Courses.map(c => c.Id));
   const timestamp = v => typeof v === 'string' && Number.isFinite(Date.parse(v));
-  if (state.SchemaVersion !== 3 || !ids.has(state.SelectedId) || !Number.isInteger(state.ReminderCursor) || state.ReminderCursor < 0 || state.ReminderCursor >= plan.Courses.length) throw new Error('Повреждён файл прогресса. Данные сохранены; проверьте резервную копию.');
+  if (state.SchemaVersion !== 4 || !ids.has(state.SelectedId) || !Number.isInteger(state.ReminderCursor) || state.ReminderCursor < 0 || state.ReminderCursor >= plan.Courses.length) throw new Error('Повреждён файл прогресса. Данные сохранены; проверьте резервную копию.');
   for (const map of ['TrackStarted', 'CourseStarted', 'CourseCompleted', 'Progress']) if (!state[map] || typeof state[map] !== 'object' || Array.isArray(state[map])) throw new Error('Некорректный файл прогресса: ' + map);
   for (const t of plan.Tracks) {
     if (!timestamp(state.TrackStarted[t.Id])) throw new Error('Нет корректной даты начала предмета.');
@@ -242,6 +269,7 @@ export function validateState(plan, state) {
     if (!plan.Tracks.some(t => t.Id === trackId) || !Array.isArray(order) || order.length !== expected.length || new Set(order).size !== expected.length || expected.some(id => !order.includes(id))) throw new Error('Некорректный порядок курсов.');
   }
   if (state.PlanningRevision !== undefined && (!Number.isInteger(state.PlanningRevision) || state.PlanningRevision < 0 || state.PlanningRevision > (plan.PlanningRevision || 0))) throw new Error('Неизвестная редакция плана.');
+  if (state.CatalogRevision !== undefined && (!Number.isInteger(state.CatalogRevision) || state.CatalogRevision < 0 || state.CatalogRevision > (plan.CatalogRevision || 0))) throw new Error('Неизвестная редакция каталога.');
   if (state.DeferredCourses && (typeof state.DeferredCourses !== 'object' || Array.isArray(state.DeferredCourses))) throw new Error('Некорректный список отложенных курсов.');
   for (const [id, value] of Object.entries(state.DeferredCourses || {})) if (!ids.has(id) || typeof value !== 'boolean') throw new Error('Некорректный отложенный курс.');
   for (const key of ['NextNotificationUtc', 'SnoozeUtc']) if (state[key] && !timestamp(state[key])) throw new Error('Неверная дата напоминания.');
