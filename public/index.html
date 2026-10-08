@@ -7,8 +7,8 @@
   <meta name="theme-color" content="#215ee8">
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./style.css">
-  <script src="./app.js?v=2" type="module"></script>
+  <link rel="stylesheet" href="./style.css?v=3">
+  <script src="./app.js?v=3" type="module"></script>
 </head>
 <body>
 <aside class="sidebar">
@@ -28,7 +28,7 @@
   <section class="current-section"><div class="section-heading"><h2>Сейчас в работе</h2><span>Модули идут по порядку</span></div><div class="current-grid" id="current-courses"></div></section>
   <section class="workspace">
     <div class="workspace-toolbar"><div class="tabs"><button class="tab active" data-view="calendar">Календарь</button><button class="tab" data-view="modules">Все модули</button></div><div class="calendar-controls"><button class="icon-button" id="previous-week" aria-label="Предыдущая неделя">‹</button><button class="button subtle small" id="today-button">Сегодня</button><button class="button subtle small" id="selected-module-button">К модулю</button><button class="icon-button" id="next-week" aria-label="Следующая неделя">›</button><label class="filter-label"><span class="sr-only">Предмет</span><select id="track-filter"><option value="all">Все предметы</option></select></label><label class="all-plan-label"><input type="checkbox" id="all-plan" checked> Весь план</label></div></div>
-    <div class="calendar-caption"><strong id="calendar-range"></strong><span id="calendar-caption">Нажми на модуль, чтобы посмотреть детали</span></div>
+    <div class="calendar-caption"><strong id="calendar-range"></strong><span id="calendar-caption">Один клик — детали, двойной клик по строке — открыть курс</span></div>
     <div id="calendar-view"><div class="gantt-scroll" id="gantt-scroll"><div class="gantt" id="gantt"></div></div><div class="legend"><span><i class="legend-box active"></i>Текущий</span><span><i class="legend-box completed"></i>Пройден</span><span><i class="legend-box planned"></i>В плане</span><span><i class="legend-box waiting"></i>Минимальный срок</span><span><i class="legend-box reserve"></i>Запас</span><span class="legend-caption">Выходные отмечены фоном</span></div></div>
     <div id="modules-view" hidden></div>
     <div class="selection-panel" id="selection-panel"></div>

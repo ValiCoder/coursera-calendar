@@ -13,13 +13,14 @@ const dateISO = day => date(day).toISOString().slice(0,10);
 const getCourse = id => data.schedule.tracks.flatMap(t => t.courses).find(c => c.Id === id);
 const statusName = c => c.status === 'completed' ? 'Пройден' : c.status === 'overdue' ? 'Продолжить' : c.status === 'active' ? 'В работе' : 'В плане';
 const colorStyle = trackId => `--track-color:${colors[trackId][0]};--track-pale:${colors[trackId][1]}`;
+const formatHours = value => value.toLocaleString('ru-RU',{maximumFractionDigits:1});
 function showToast(message) { $('toast').textContent = message; $('toast').hidden = false; clearTimeout(showToast.timer); showToast.timer = setTimeout(() => $('toast').hidden = true,4500); }
 async function action(value) {
   if(value.type==='test'){
     const target=reminderTarget(data.plan,data.state);if(!target)throw new Error('Нет активных модулей: проверь дату начала.');
     await displayNotification({title:'Проверка напоминаний',body:target.course.Title,url:target.course.Url});return {sent:true};
   }
-  try {const profile=await changeProfile(plan,value,data.version);data=snapshot(plan,profile);selected=data.state.SelectedId;render();return data;}
+  try {const profile=await changeProfile(plan,value,data.version);data=snapshot(plan,profile);selected=data.state.SelectedId;if(value.type==='select')renderSelection();else render();return data;}
   catch(error){await load();throw error;}
 }
 async function load() {
@@ -56,25 +57,34 @@ function render() {
   $('track-filter').innerHTML = '<option value="all">Все предметы</option>'+schedule.tracks.map(t=>`<option value="${t.Id}">${colors[t.Id][2]}</option>`).join('');
   $('track-filter').value = [...$('track-filter').options].some(o=>o.value===filter) ? filter : 'all';
   $('current-courses').innerHTML = schedule.tracks.map(t=>{
+    const totalHours=t.courses.reduce((sum,course)=>sum+course.Hours,0);
+    const completedHours=t.courses.reduce((sum,course)=>sum+course.Hours*course.progress/100,0);
+    const subjectHours=`<div class="course-card-hours">Предмет: ${formatHours(totalHours)} ч · Пройдено: ${formatHours(completedHours)} ч</div>`;
     const c = t.courses.find(c=>c.active);
-    if (!c) return `<article class="course-card" style="${colorStyle(t.Id)}"><div class="course-card-head">${colors[t.Id][2]}</div><h2>Предмет завершён</h2><p class="course-card-meta">Все модули пройдены</p></article>`;
+    if (!c) return `<article class="course-card" style="${colorStyle(t.Id)}"><div class="course-card-head">${colors[t.Id][2]}</div><h2>Предмет завершён</h2><p class="course-card-meta">Все модули пройдены</p>${subjectHours}</article>`;
     const sub = data.state.SubcourseProgress?.[c.Id];
     const subIndex = sub?.findIndex(v=>v<100);
     const subName = sub && subIndex >= 0 ? subcourseNames[c.Id][subIndex] : '';
     const value = sub ? sub[subIndex] || 0 : c.progress;
     const progressText = sub ? `${sub.filter(v=>v===100).length}/${sub.length} курсов · текущий: ${value}%` : `${c.progress}% пройдено`;
-    return `<article class="course-card ${selected===c.Id?'selected':''}" style="${colorStyle(t.Id)}"><div class="course-card-head"><span>${colors[t.Id][2]}</span><span class="tag ${c.status}">${statusName(c)}</span></div><button class="course-card-title" data-select="${c.Id}">${escape(subName || c.Title)}</button><div class="course-card-meta">${subName?escape(c.Title):fmt(c.start)+' — '+fmt(c.end)+' · '+c.Hours+' ч'}</div><div class="card-progress"><span style="width:${value}%"></span></div><div class="card-bottom"><span>${progressText}</span><button data-select="${c.Id}">Продолжить</button></div></article>`;
+    return `<article class="course-card ${selected===c.Id?'selected':''}" data-course="${c.Id}" style="${colorStyle(t.Id)}"><div class="course-card-head"><span>${colors[t.Id][2]}</span><span class="tag ${c.status}">${statusName(c)}</span></div><button class="course-card-title" data-select="${c.Id}">${escape(subName || c.Title)}</button><div class="course-card-meta">${subName?escape(c.Title):fmt(c.start)+' — '+fmt(c.end)+' · '+c.Hours+' ч'}</div>${subjectHours}<div class="card-progress"><span style="width:${value}%"></span></div><div class="card-bottom"><span>${progressText}</span><button data-select="${c.Id}">Продолжить</button></div></article>`;
   }).join('') + (data.state.Program==='general'?'<article class="course-card" style="--track-color:#d29436"><div class="course-card-head">Предпринимательство</div><h2 class="course-card-title">Ожидаем список курсов</h2><div class="course-card-meta">Добавим курсы и рассчитаем даты, когда пришлёшь список.</div><div class="card-bottom"><span>Программа выбрана</span><button id="pending-card-settings">Настроить</button></div></article>':'');
   renderCalendar(); renderModules(); renderSelected(); renderView();
 }
 function visibleTracks() {return data.schedule.tracks.filter(t=>$('track-filter').value==='all'||t.Id===$('track-filter').value);}
+function renderSelection() {
+  document.querySelectorAll('[data-course]').forEach(row=>row.classList.toggle('selected',row.dataset.course===selected));
+  renderSelected();
+}
+const courseRow = target => target.closest('.gantt-row[data-course], .module-table tr[data-course]');
+const isCourseEditor = target => !!target.closest('input, textarea, select, a, [contenteditable]:not([contenteditable="false"])');
 function renderCalendar() {
   const all = $('all-plan').checked;
   const shown=visibleTracks();
   const rangeStart = all ? Math.min(...shown.flatMap(t=>[t.start,...t.courses.map(c=>c.start)])) : weekStart ?? data.schedule.today;
   const rangeEnd = all ? Math.min(Math.max(...shown.map(t=>t.end)),rangeStart+119) : rangeStart+6;
   calendarStart=rangeStart;calendarEnd=rangeEnd;
-  $('calendar-caption').textContent=all&&Math.max(...shown.map(t=>t.end))>rangeEnd?'Первые 120 дней. Выбери предмет или нажми «К модулю», чтобы перейти дальше.':'Нажми на модуль, чтобы посмотреть детали';
+  $('calendar-caption').textContent=all&&Math.max(...shown.map(t=>t.end))>rangeEnd?'Первые 120 дней. Перейди «К модулю»; двойной клик по строке откроет курс.':'Один клик — детали, двойной клик по строке — открыть курс';
   const days = rangeEnd-rangeStart+1;
   $('calendar-range').textContent = fmt(rangeStart,{day:'numeric',month:'long'})+' — '+fmt(rangeEnd,{day:'numeric',month:'long',year:'numeric'});
   $('gantt').style.setProperty('--days',days);
@@ -94,7 +104,7 @@ function renderCalendar() {
   const tracks = visibleTracks().map(t=>{
     const trackStart=Math.max(t.start,rangeStart),trackEnd=Math.min(t.end,rangeEnd);
     let html=`<div class="gantt-row track-row" style="${colorStyle(t.Id)}"><div class="gantt-label"><span class="track-dot"></span>${colors[t.Id][2]}</div><div class="gantt-timeline">${dayBackgrounds}${trackEnd>=trackStart?`<div class="track-band" style="left:calc(var(--day-width) * ${trackStart-rangeStart} + 3px);width:calc(var(--day-width) * ${trackEnd-trackStart+1} - 6px)">${t.MinimumDays} дней минимум + ${t.ReserveDays} дня запаса</div>`:''}</div></div>`;
-    html+=t.courses.map((c,i)=>`<div class="gantt-row ${selected===c.Id?'selected':''}" style="${colorStyle(t.Id)}"><button class="gantt-label course-label" data-select="${c.Id}"><span class="number-chip">${c.status==='completed'?'✓':i+1}</span><span class="label-text"><strong>${escape(c.Title)}</strong><small>${c.Hours} ч · ${fmt(c.start)}–${fmt(c.end)} · ${c.days} дн.</small></span></button><div class="gantt-timeline">${dayBackgrounds}${bar(c.start,c.end,c.status,c.status==='completed'?'✓':c.days<=2?c.days+' дн.':fmt(c.start)+'–'+fmt(c.end),c.Id,c.Title+' · '+statusName(c)+' · '+fmt(c.start)+'–'+fmt(c.end))}</div></div>`).join('');
+    html+=t.courses.map((c,i)=>`<div class="gantt-row ${selected===c.Id?'selected':''}" data-course="${c.Id}" style="${colorStyle(t.Id)}"><button class="gantt-label course-label" data-select="${c.Id}"><span class="number-chip">${c.status==='completed'?'✓':i+1}</span><span class="label-text"><strong>${escape(c.Title)}</strong><small>${c.Hours} ч · ${fmt(c.start)}–${fmt(c.end)} · ${c.days} дн.</small></span></button><div class="gantt-timeline">${dayBackgrounds}${bar(c.start,c.end,c.status,c.status==='completed'?'✓':c.days<=2?c.days+' дн.':fmt(c.start)+'–'+fmt(c.end),c.Id,c.Title+' · '+statusName(c)+' · '+fmt(c.start)+'–'+fmt(c.end))}</div></div>`).join('');
     if(!t.finished&&t.waitStart) html+=`<div class="gantt-row utility-row"><div class="gantt-label">Ожидание минимального срока</div><div class="gantt-timeline">${dayBackgrounds}${bar(t.waitStart,t.waitEnd,'waiting','Без учебных часов')}</div></div>`;
     if(!t.finished) html+=`<div class="gantt-row utility-row"><div class="gantt-label">${t.ReserveDays} дня запаса</div><div class="gantt-timeline">${dayBackgrounds}${bar(t.reserveStart,t.end,'reserve','Запас')}</div></div>`;
     return html;
@@ -102,7 +112,7 @@ function renderCalendar() {
   $('gantt').innerHTML = head+tracks;
 }
 function renderModules() {
-  $('modules-view').innerHTML = `<table class="module-table"><thead><tr><th>Модуль</th><th class="hours-col">Часы</th><th class="date-col">Даты</th><th>Статус</th><th>Прогресс</th></tr></thead><tbody>${visibleTracks().map(t=>`<tr class="group-heading"><td colspan="5">${colors[t.Id][2]} · ${escape(t.Title)}</td></tr>${t.courses.map(c=>`<tr class="${selected===c.Id?'selected':''}"><td><button class="module-title" data-select="${c.Id}">${escape(c.Title)}</button></td><td class="hours-col">${c.Hours}</td><td class="date-col">${fmt(c.start)}–${fmt(c.end)}</td><td><span class="tag ${c.status}">${statusName(c)}</span></td><td>${c.status==='completed'?'100%':`<input class="progress-input" type="number" min="0" max="100" value="${c.progress}" aria-label="Прогресс ${escape(c.Title)}" data-progress="${c.Id}"> %`}</td></tr>`).join('')}`).join('')}</tbody></table>` + (data.state.Program==='general'?'<div class="empty-program"><strong>Предпринимательство: список курсов ещё не добавлен</strong>Технологический план и его прогресс сохранены. Можно вернуться к нему через настройки.</div>':'');
+  $('modules-view').innerHTML = `<table class="module-table"><thead><tr><th>Модуль</th><th class="hours-col">Часы</th><th class="date-col">Даты</th><th>Статус</th><th>Прогресс</th></tr></thead><tbody>${visibleTracks().map(t=>`<tr class="group-heading"><td colspan="5">${colors[t.Id][2]} · ${escape(t.Title)}</td></tr>${t.courses.map(c=>`<tr class="${selected===c.Id?'selected':''}" data-course="${c.Id}"><td><button class="module-title" data-select="${c.Id}">${escape(c.Title)}</button></td><td class="hours-col">${c.Hours}</td><td class="date-col">${fmt(c.start)}–${fmt(c.end)}</td><td><span class="tag ${c.status}">${statusName(c)}</span></td><td>${c.status==='completed'?'100%':`<input class="progress-input" type="number" min="0" max="100" value="${c.progress}" aria-label="Прогресс ${escape(c.Title)}" data-progress="${c.Id}"> %`}</td></tr>`).join('')}`).join('')}</tbody></table>` + (data.state.Program==='general'?'<div class="empty-program"><strong>Предпринимательство: список курсов ещё не добавлен</strong>Технологический план и его прогресс сохранены. Можно вернуться к нему через настройки.</div>':'');
 }
 function renderSelected() {
   const c = getCourse(selected); if (!c) {$('selection-panel').innerHTML='Выбери модуль в календаре.';return;}
@@ -155,12 +165,14 @@ async function checkReminder(){
  }catch(error){showToast(error.message);}finally{if(claimed)await load();}
 }
 document.addEventListener('click',async event=>{
+  if(isCourseEditor(event.target))return;
   const button=event.target.closest('button,[data-select]');
-  if(!button)return;
+  const selectId=button?.dataset.select||(!button&&courseRow(event.target)?.dataset.course);
+  if(!button&&!selectId)return;
   try {
+    if(selectId){if(event.detail>1)return;if(selected!==selectId)await action({type:'select',id:selectId});return;}
     if(button.dataset.view){view=button.dataset.view;renderView();return;}
     if(button.dataset.filter){$('track-filter').value=button.dataset.filter;render();return;}
-    if(button.dataset.select){await action({type:'select',id:button.dataset.select});return;}
     if(button.dataset.complete||button.dataset.uncomplete){
       completeMode=button.dataset.uncomplete?'uncomplete':'complete';
       completeId=button.dataset.uncomplete||button.dataset.complete;
@@ -193,6 +205,13 @@ document.addEventListener('click',async event=>{
       case 'previous-week':case 'next-week':$('all-plan').checked=false;weekStart=(weekStart??data.schedule.today)+(button.id==='next-week'?7:-7);renderCalendar();break;
     }
   }catch(error){showToast(error.message);}
+});
+document.addEventListener('dblclick',event=>{
+  if(event.button!==0||isCourseEditor(event.target))return;
+  const row=courseRow(event.target),c=row&&getCourse(row.dataset.course);
+  if(!c)return;
+  event.preventDefault();
+  window.open(c.Url,'_blank','noopener,noreferrer');
 });
 document.addEventListener('change',async event=>{
   const input=event.target;
