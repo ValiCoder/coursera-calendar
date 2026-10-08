@@ -1,6 +1,6 @@
-import { snapshot } from './profile.mjs?v=2';
-import { reminderTarget } from './core.mjs?v=2';
-import { readProfile, changeProfile, claimReminder } from './storage.mjs?v=2';
+import { snapshot } from './profile.mjs?v=4';
+import { reminderTarget, importantDates } from './core.mjs?v=4';
+import { readProfile, changeProfile, claimReminder } from './storage.mjs?v=4';
 const $ = id => document.getElementById(id);
 let data, plan, selected, view = 'calendar', weekStart = null, completeId, completeMode = 'complete', dirtySettings = false, swRegistration, calendarStart, calendarEnd;
 const colors = {qa:['#2463df','#e3edff','Тестирование'], security:['#24a38b','#e3f3ef','Безопасность'], architecture:['#7e62d7','#eee9fb','Архитектура'], entrepreneurship:['#d29436','#fcf2df','Предпринимательство']};
@@ -41,6 +41,7 @@ function render() {
   $('total-progress').style.width = completed / data.plan.Courses.length * 100 + '%';
   $('stat-hours').innerHTML = `${data.plan.Courses.reduce((a,c)=>a+c.Hours,0)} <span>часов</span>`;
   $('stat-finish').textContent = fmt(schedule.end,{day:'numeric',month:'long'});
+  renderImportantDates();
   const paused = data.state.SnoozeUtc && new Date(data.state.SnoozeUtc) > new Date();
   const enabled = data.state.NotificationsEnabled;
   $('stat-reminder').textContent = !enabled ? 'Выключено' : paused ? 'На паузе' : data.state.NextNotificationUtc ? localTime(data.state.NextNotificationUtc) : 'Скоро';
@@ -71,6 +72,18 @@ function render() {
   }).join('') + (data.state.Program==='general'?'<article class="course-card" style="--track-color:#d29436"><div class="course-card-head">Предпринимательство</div><h2 class="course-card-title">Ожидаем список курсов</h2><div class="course-card-meta">Добавим курсы и рассчитаем даты, когда пришлёшь список.</div><div class="card-bottom"><span>Программа выбрана</span><button id="pending-card-settings">Настроить</button></div></article>':'');
   renderCalendar(); renderModules(); renderSelected(); renderView();
 }
+function renderImportantDates() {
+  const deadlines=importantDates(data.plan,data.state);
+  const fullDate=day=>fmt(day,{day:'numeric',month:'long',year:'numeric'});
+  const remaining=deadlines.subscriptionRemainingDays;
+  $('subscription-date').textContent=deadlines.subscriptionEndDay===null?'Дата не задана':fullDate(deadlines.subscriptionEndDay);
+  $('subscription-note').textContent=remaining===null?'Можно указать в настройках.':remaining<0?'Срок подписки прошёл.':remaining===0?'Последний день подписки.':'До окончания: '+remaining+' дн.';
+  const conflict=deadlines.subscriptionEndDay!==null&&data.schedule.end>deadlines.subscriptionEndDay;
+  $('subscription-conflict').hidden=!conflict;
+  $('subscription-conflict').textContent=conflict?'План с запасом заканчивается '+fullDate(data.schedule.end)+' — после срока подписки.':'';
+  $('application-dates').textContent=deadlines.applicationStartDay===null?'Даты не заданы':fmt(deadlines.applicationStartDay)+' — '+fullDate(deadlines.applicationEndDay);
+  $('application-note').textContent=deadlines.applicationStatus==='upcoming'?'До начала сдачи заявлений: '+deadlines.applicationRemainingDays+' дн.':deadlines.applicationStatus==='open'?'Сдача заявлений открыта · осталось '+deadlines.applicationRemainingDays+' дн., включая сегодня.':deadlines.applicationStatus==='closed'?'Период сдачи заявлений завершён.':'Можно указать в настройках.';
+}
 function visibleTracks() {return data.schedule.tracks.filter(t=>$('track-filter').value==='all'||t.Id===$('track-filter').value);}
 function renderSelection() {
   document.querySelectorAll('[data-course]').forEach(row=>row.classList.toggle('selected',row.dataset.course===selected));
@@ -82,9 +95,11 @@ function renderCalendar() {
   const all = $('all-plan').checked;
   const shown=visibleTracks();
   const rangeStart = all ? Math.min(...shown.flatMap(t=>[t.start,...t.courses.map(c=>c.start)])) : weekStart ?? data.schedule.today;
-  const rangeEnd = all ? Math.min(Math.max(...shown.map(t=>t.end)),rangeStart+119) : rangeStart+6;
+  const deadlines=importantDates(data.plan,data.state);
+  const fullRangeEnd=Math.max(...shown.map(t=>t.end),...[deadlines.subscriptionEndDay,deadlines.applicationEndDay].filter(day=>day!==null));
+  const rangeEnd = all ? Math.min(fullRangeEnd,rangeStart+119) : rangeStart+6;
   calendarStart=rangeStart;calendarEnd=rangeEnd;
-  $('calendar-caption').textContent=all&&Math.max(...shown.map(t=>t.end))>rangeEnd?'Первые 120 дней. Перейди «К модулю»; двойной клик по строке откроет курс.':'Один клик — детали, двойной клик по строке — открыть курс';
+  $('calendar-caption').textContent=all&&fullRangeEnd>rangeEnd?'Первые 120 дней. Перейди «К модулю»; двойной клик по строке откроет курс.':'Один клик — детали, двойной клик по строке — открыть курс';
   const days = rangeEnd-rangeStart+1;
   $('calendar-range').textContent = fmt(rangeStart,{day:'numeric',month:'long'})+' — '+fmt(rangeEnd,{day:'numeric',month:'long',year:'numeric'});
   $('gantt').style.setProperty('--days',days);
@@ -101,6 +116,10 @@ function renderCalendar() {
     const d=rangeStart+i, dt=date(d), weekend=[0,6].includes(dt.getUTCDay());
     return `<div class="date-cell ${weekend?'weekend':''} ${d===data.schedule.today?'today':''}"><span class="month">${dt.toLocaleDateString('ru-RU',{month:'short',timeZone:'UTC'}).replace('.','')}</span><span class="date-number">${dt.getUTCDate()}</span><span class="weekday">${dt.toLocaleDateString('ru-RU',{weekday:'short',timeZone:'UTC'})}</span></div>`;
   }).join('')}</div></div>`;
+  const deadlineRow=(label,detail,start,end,classes,text)=>'<div class="gantt-row deadline-row"><div class="gantt-label"><div class="label-text"><strong>'+label+'</strong><small>'+detail+'</small></div></div><div class="gantt-timeline">'+dayBackgrounds+bar(start,end,classes,text,null,label+' · '+detail)+'</div></div>';
+  let deadlineRows='';
+  if(deadlines.subscriptionEndDay!==null)deadlineRows+=deadlineRow('Подписка Coursera','Последний день · '+fmt(deadlines.subscriptionEndDay),deadlines.subscriptionEndDay,deadlines.subscriptionEndDay,'subscription-deadline',String(date(deadlines.subscriptionEndDay).getUTCDate()));
+  if(deadlines.applicationStartDay!==null)deadlineRows+=deadlineRow('Сдача заявлений',fmt(deadlines.applicationStartDay)+' — '+fmt(deadlines.applicationEndDay)+' включительно',deadlines.applicationStartDay,deadlines.applicationEndDay,'application-window','Сдача заявлений');
   const tracks = visibleTracks().map(t=>{
     const trackStart=Math.max(t.start,rangeStart),trackEnd=Math.min(t.end,rangeEnd);
     let html=`<div class="gantt-row track-row" style="${colorStyle(t.Id)}"><div class="gantt-label"><span class="track-dot"></span>${colors[t.Id][2]}</div><div class="gantt-timeline">${dayBackgrounds}${trackEnd>=trackStart?`<div class="track-band" style="left:calc(var(--day-width) * ${trackStart-rangeStart} + 3px);width:calc(var(--day-width) * ${trackEnd-trackStart+1} - 6px)">${t.MinimumDays} дней минимум + ${t.ReserveDays} дня запаса</div>`:''}</div></div>`;
@@ -109,7 +128,7 @@ function renderCalendar() {
     if(!t.finished) html+=`<div class="gantt-row utility-row"><div class="gantt-label">${t.ReserveDays} дня запаса</div><div class="gantt-timeline">${dayBackgrounds}${bar(t.reserveStart,t.end,'reserve','Запас')}</div></div>`;
     return html;
   }).join('');
-  $('gantt').innerHTML = head+tracks;
+  $('gantt').innerHTML = head+deadlineRows+tracks;
 }
 function renderModules() {
   $('modules-view').innerHTML = `<table class="module-table"><thead><tr><th>Модуль</th><th class="hours-col">Часы</th><th class="date-col">Даты</th><th>Статус</th><th>Прогресс</th></tr></thead><tbody>${visibleTracks().map(t=>`<tr class="group-heading"><td colspan="5">${colors[t.Id][2]} · ${escape(t.Title)}</td></tr>${t.courses.map(c=>`<tr class="${selected===c.Id?'selected':''}" data-course="${c.Id}"><td><button class="module-title" data-select="${c.Id}">${escape(c.Title)}</button></td><td class="hours-col">${c.Hours}</td><td class="date-col">${fmt(c.start)}–${fmt(c.end)}</td><td><span class="tag ${c.status}">${statusName(c)}</span></td><td>${c.status==='completed'?'100%':`<input class="progress-input" type="number" min="0" max="100" value="${c.progress}" aria-label="Прогресс ${escape(c.Title)}" data-progress="${c.Id}"> %`}</td></tr>`).join('')}`).join('')}</tbody></table>` + (data.state.Program==='general'?'<div class="empty-program"><strong>Предпринимательство: список курсов ещё не добавлен</strong>Технологический план и его прогресс сохранены. Можно вернуться к нему через настройки.</div>':'');
@@ -135,6 +154,10 @@ function openSettings() {
   $('start-date').value=data.state.TrackPlanStart?.[first.Id]||data.plan.StartDate;
   $('track-date-fields').innerHTML=data.originalTracks.map(t=>`<div class="track-date-row"><label for="date-${t.Id}">${colors[t.Id][2]}</label><input id="date-${t.Id}" type="date" min="2020-01-01" max="2100-12-31" required data-track-date="${t.Id}" value="${data.state.TrackPlanStart?.[t.Id]||data.plan.StartDate}"></div>`).join('');
   document.querySelector(`input[name="program"][value="${data.state.Program||'technological'}"]`).checked=true;
+  const deadlines=importantDates(data.plan,data.state);
+  $('subscription-end-date').value=deadlines.subscriptionEndDay===null?'':dateISO(deadlines.subscriptionEndDay);
+  $('application-start-date').value=deadlines.applicationStartDay===null?'':dateISO(deadlines.applicationStartDay);
+  $('application-end-date').value=deadlines.applicationEndDay===null?'':dateISO(deadlines.applicationEndDay);
   $('settings-dialog').showModal();
 }
 async function enableNotifications() {
@@ -187,7 +210,7 @@ document.addEventListener('click',async event=>{
     switch(button.id){
       case 'retry-load':if(await load())button.hidden=true;break;
       case 'export-progress':{const blob=new Blob([JSON.stringify({schema:1,exportedAt:new Date().toISOString(),state:data.state},null,2)],{type:'application/json'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='my-study-progress.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);break;}
-      case 'settings-open':case 'settings-top':case 'pending-program-settings':case 'pending-card-settings':openSettings();break;
+      case 'important-dates-edit':case 'settings-open':case 'settings-top':case 'pending-program-settings':case 'pending-card-settings':openSettings();break;
       case 'settings-close':$('settings-dialog').close();break;
       case 'settings-reset':$('settings-dialog').close();$('reset-dialog').showModal();break;
       case 'reset-cancel':$('reset-dialog').close();break;
@@ -226,7 +249,7 @@ $('settings-form').addEventListener('submit',async event=>{
   const entries=[...document.querySelectorAll('[data-track-date]')].map(el=>({id:el.dataset.trackDate,value:el.value}));
   const program=document.querySelector('input[name="program"]:checked').value;
   try {
-    await action({type:'settings',program,dates:dirtySettings?entries.filter(entry=>entry.value!==(data.state.TrackPlanStart?.[entry.id]||data.plan.StartDate)):[]});
+    await action({type:'settings',program,SubscriptionEndDate:$('subscription-end-date').value||null,ApplicationStartDate:$('application-start-date').value||null,ApplicationEndDate:$('application-end-date').value||null,dates:dirtySettings?entries.filter(entry=>entry.value!==(data.state.TrackPlanStart?.[entry.id]||data.plan.StartDate)):[]});
     $('settings-dialog').close();showToast('Настройки сохранены. Календарь пересчитан.');
   }catch(error){showToast(error.message);}
 });

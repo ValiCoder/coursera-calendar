@@ -4,6 +4,9 @@
   "TimeZoneOffsetMinutes": 300,
   "ReminderMinutes": 30,
   "StartDate": "2026-10-07",
+  "SubscriptionEndDate": "2026-11-05",
+  "ApplicationStartDate": "2026-11-01",
+  "ApplicationEndDate": "2026-11-09",
   "Tracks": [
     {
       "Id": "qa",

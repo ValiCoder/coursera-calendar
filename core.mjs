@@ -4,6 +4,39 @@ export function localDay(value, plan) {
   return Math.floor((new Date(value).getTime() + plan.TimeZoneOffsetMinutes * 60000) / DAY);
 }
 export const dayISO = day => new Date(day * DAY).toISOString().slice(0, 10);
+const importantDateLabels = {
+  SubscriptionEndDate: 'окончания подписки Coursera',
+  ApplicationStartDate: 'начала подачи заявки',
+  ApplicationEndDate: 'окончания подачи заявки'
+};
+function validImportantDate(value) {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && value >= '2020-01-01' && value <= '2100-12-31' && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
+}
+function resolveImportantDates(plan, state) {
+  const dates = {};
+  for (const field of Object.keys(importantDateLabels)) {
+    const value = state[field] === undefined ? plan[field] ?? null : state[field];
+    if (value !== null && !validImportantDate(value)) throw new Error('Укажите корректную дату ' + importantDateLabels[field] + '.');
+    dates[field] = value;
+  }
+  const start = dates.ApplicationStartDate, end = dates.ApplicationEndDate;
+  if ((start === null) !== (end === null)) throw new Error('Укажите обе даты подачи заявки или очистите обе.');
+  if (start !== null && start > end) throw new Error('Начало подачи заявки не может быть позже окончания.');
+  return dates;
+}
+export function importantDates(plan, state, now = new Date()) {
+  const dates = resolveImportantDates(plan, state), today = localDay(now, plan);
+  const toDay = value => value === null ? null : Math.floor(Date.parse(value) / DAY);
+  const subscriptionEndDay = toDay(dates.SubscriptionEndDate);
+  const applicationStartDay = toDay(dates.ApplicationStartDate), applicationEndDay = toDay(dates.ApplicationEndDate);
+  const applicationStatus = applicationStartDay === null ? null : today < applicationStartDay ? 'upcoming' : today <= applicationEndDay ? 'open' : 'closed';
+  return {
+    subscriptionEndDay, applicationStartDay, applicationEndDay,
+    subscriptionRemainingDays: subscriptionEndDay === null ? null : subscriptionEndDay - today,
+    applicationStatus,
+    applicationRemainingDays: applicationStatus === null ? null : applicationStatus === 'upcoming' ? applicationStartDay - today : applicationStatus === 'open' ? applicationEndDay - today + 1 : 0
+  };
+}
 export function planTrackStart(plan, state, trackId) {
   return state.TrackPlanStart?.[trackId] ? Math.floor(Date.parse(state.TrackPlanStart[trackId]) / DAY) : localDay(state.TrackStarted[trackId], plan);
 }
@@ -162,6 +195,10 @@ export function validateState(plan, state) {
   for (const map of ['TrackPlanStart','CoursePlanStart']) for (const [id, date] of Object.entries(state[map] || {})) {
     if (!(map === 'TrackPlanStart' ? plan.Tracks.some(t => t.Id === id) : ids.has(id)) || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0,10) !== date) throw new Error('Некорректная дата плана.');
   }
+  for (const field of Object.keys(importantDateLabels)) {
+    if (Object.hasOwn(state, field) && state[field] !== null && !validImportantDate(state[field])) throw new Error('Укажите корректную дату ' + importantDateLabels[field] + '.');
+  }
+  resolveImportantDates(plan, state);
   if (state.Program && !['technological','general'].includes(state.Program)) throw new Error('Неизвестная программа предпринимательства.');
   return state;
 }

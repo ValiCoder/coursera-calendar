@@ -2,7 +2,7 @@ import { clone, DAY, localDay, dayISO, activate, buildSchedule, completeCourse, 
 
 export function createState(plan, now = new Date(), start = dayISO(localDay(now, plan))) {
   const began = new Date(Date.parse(start) - plan.TimeZoneOffsetMinutes * 60000).toISOString();
-  const state = { SchemaVersion:2, TrackStarted:Object.fromEntries(plan.Tracks.map(t=>[t.Id,began])), TrackPlanStart:Object.fromEntries(plan.Tracks.map(t=>[t.Id,start])), CoursePlanStart:{}, CourseStarted:{}, CourseCompleted:{}, Progress:{}, ProgressBeforeComplete:{}, SelectedId:plan.Courses[0].Id, ReminderCursor:0, Program:'technological', NotificationsEnabled:false, NextNotificationUtc:null, SnoozeUtc:null };
+  const state = { SchemaVersion:2, TrackStarted:Object.fromEntries(plan.Tracks.map(t=>[t.Id,began])), TrackPlanStart:Object.fromEntries(plan.Tracks.map(t=>[t.Id,start])), CoursePlanStart:{}, CourseStarted:{}, CourseCompleted:{}, Progress:{}, ProgressBeforeComplete:{}, SelectedId:plan.Courses[0].Id, ReminderCursor:0, Program:'technological', NotificationsEnabled:false, NextNotificationUtc:null, SnoozeUtc:null, SubscriptionEndDate:plan.SubscriptionEndDate ?? null, ApplicationStartDate:plan.ApplicationStartDate ?? null, ApplicationEndDate:plan.ApplicationEndDate ?? null };
   initializeCoursePlan(plan, state);
   activate(plan, state, now);
   return state;
@@ -28,6 +28,7 @@ export function applyAction(plan, original, input, now = new Date()) {
     case 'settings':
       if(!['technological','general'].includes(input.program))throw new Error('Неизвестная программа.');
       for(const entry of input.dates || [])reschedule(plan,state,entry.value,entry.id);
+      for(const field of ['SubscriptionEndDate','ApplicationStartDate','ApplicationEndDate']) if(Object.hasOwn(input,field))state[field]=input[field];
       state.Program=input.program;
       if(!effectivePlan(plan,state).Courses.some(c=>c.Id===state.SelectedId))state.SelectedId=plan.Courses[0].Id;
       break;

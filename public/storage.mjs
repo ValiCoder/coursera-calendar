@@ -1,5 +1,5 @@
-import { createState, applyAction, effectivePlan } from './profile.mjs?v=2';
-import { reminderTarget, activate, migrateState } from './core.mjs?v=2';
+import { createState, applyAction, effectivePlan } from './profile.mjs?v=4';
+import { reminderTarget, activate, migrateState } from './core.mjs?v=4';
 let database;
 function open() {return database ||= new Promise((resolve,reject)=>{const r=indexedDB.open('coursera-personal-calendar-v3',1);r.onupgradeneeded=()=>r.result.createObjectStore('profiles');r.onsuccess=()=>resolve(r.result);r.onerror=()=>{database=null;reject(new Error('Разреши хранение данных для этого сайта.'));};});}
 async function transaction(plan,change=null) {

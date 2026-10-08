@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { buildSchedule, completeCourse, reschedule, reminderTarget, validateState, dayISO, earliestFinish, migrateState } from './core.mjs';
+import { buildSchedule, completeCourse, reschedule, reminderTarget, validateState, dayISO, earliestFinish, migrateState, importantDates } from './core.mjs';
 import { createState, effectivePlan, applyAction } from './profile.mjs';
 const plan = JSON.parse(fs.readFileSync(new URL('./data/plan.json',import.meta.url),'utf8').replace(/^\uFEFF/,''));
 function fresh(){return createState(plan,new Date('2026-10-08T14:00Z'),'2026-10-07');}
@@ -145,5 +145,116 @@ test('completion across UTC+5 midnight records the fact separately from the plan
  completeCourse(plan,state,'qa-quality-testing',now);
  const course=buildSchedule(plan,state,now).tracks[0].courses[0];
  assert.equal(dayISO(course.start),'2026-10-08');assert.equal(dayISO(course.end),'2026-10-09');
- assert.equal(course.completedAt,'2026-10-07T20:00:00.000Z');
+  assert.equal(course.completedAt,'2026-10-07T20:00:00.000Z');
+});
+
+test('new profiles seed personal subscription and application dates from the plan',()=>{
+ const now=new Date('2026-10-09T12:00Z'),state=createState(plan,now);
+ assert.equal(state.SchemaVersion,2);
+ assert.equal(state.SubscriptionEndDate,'2026-11-05');
+ assert.equal(state.ApplicationStartDate,'2026-11-01');
+ assert.equal(state.ApplicationEndDate,'2026-11-09');
+ const dates=importantDates(plan,state,now);
+ assert.equal(dayISO(dates.subscriptionEndDay),'2026-11-05');
+ assert.equal(dayISO(dates.applicationStartDay),'2026-11-01');
+ assert.equal(dayISO(dates.applicationEndDay),'2026-11-09');
+ assert.equal(dates.subscriptionRemainingDays,27);
+ assert.equal(dates.applicationStatus,'upcoming');
+ assert.equal(dates.applicationRemainingDays,23);
+ validateState(plan,state);
+});
+
+test('legacy schema 2 profiles use deadline defaults without rewriting their data',()=>{
+ const now=new Date('2026-10-09T12:00Z'),state=fresh();
+ delete state.SubscriptionEndDate;delete state.ApplicationStartDate;delete state.ApplicationEndDate;
+ const before=structuredClone(state);
+ const dates=importantDates(plan,state,now);
+ assert.equal(dates.subscriptionRemainingDays,27);
+ assert.equal(dates.applicationStatus,'upcoming');
+ assert.equal(dates.applicationRemainingDays,23);
+ validateState(plan,state);assert.deepEqual(state,before);
+ const withoutDefaults={...plan};delete withoutDefaults.SubscriptionEndDate;delete withoutDefaults.ApplicationStartDate;delete withoutDefaults.ApplicationEndDate;
+ assert.deepEqual(importantDates(withoutDefaults,state,now),{
+  subscriptionEndDay:null,applicationStartDay:null,applicationEndDay:null,subscriptionRemainingDays:null,applicationStatus:null,applicationRemainingDays:null
+ });
+});
+
+test('editing and clearing personal deadlines preserves course dates, facts and progress',()=>{
+ const now=new Date('2026-10-09T12:00Z');let state=fresh();
+ state=applyAction(plan,state,{type:'progress',id:'qa-quality-testing',value:45},now);
+ state=applyAction(plan,state,{type:'complete',id:'qa-quality-testing'},now);
+ state=applyAction(plan,state,{type:'progress',id:'architecture-design',value:70},now);
+ const before=structuredClone(state),beforePlan=structuredClone(plan),beforeRanges=ranges(buildSchedule(plan,state,now));
+ const edited=applyAction(plan,state,{type:'settings',program:state.Program,dates:[],SubscriptionEndDate:'2026-11-20',ApplicationStartDate:'2026-11-03',ApplicationEndDate:'2026-11-10'},now);
+ assert.equal(edited.SubscriptionEndDate,'2026-11-20');
+ assert.equal(edited.ApplicationStartDate,'2026-11-03');assert.equal(edited.ApplicationEndDate,'2026-11-10');
+ for(const field of ['TrackStarted','TrackPlanStart','CoursePlanStart','CourseStarted','CourseCompleted','Progress','ProgressBeforeComplete'])assert.deepEqual(edited[field],before[field]);
+ assert.deepEqual(ranges(buildSchedule(plan,edited,now)),beforeRanges);
+ const cleared=applyAction(plan,edited,{type:'settings',program:edited.Program,dates:[],SubscriptionEndDate:null,ApplicationStartDate:null,ApplicationEndDate:null},now);
+ assert.deepEqual(importantDates(plan,cleared,now),{
+  subscriptionEndDay:null,applicationStartDay:null,applicationEndDay:null,subscriptionRemainingDays:null,applicationStatus:null,applicationRemainingDays:null
+ });
+ for(const field of ['TrackStarted','TrackPlanStart','CoursePlanStart','CourseStarted','CourseCompleted','Progress','ProgressBeforeComplete'])assert.deepEqual(cleared[field],before[field]);
+ assert.deepEqual(ranges(buildSchedule(plan,cleared,now)),beforeRanges);
+ assert.deepEqual(state,before);assert.deepEqual(plan,beforePlan);
+ assert.equal(createState(plan,now).SubscriptionEndDate,'2026-11-05');
+});
+
+test('old settings and inherited input fields do not replace personal deadlines',()=>{
+ const now=new Date('2026-10-09T12:00Z');
+ const state=applyAction(plan,fresh(),{type:'settings',program:'technological',SubscriptionEndDate:'2026-12-05',ApplicationStartDate:'2026-12-01',ApplicationEndDate:'2026-12-09'},now);
+ for(const input of [
+  {type:'settings',program:'general',dates:[]},
+  Object.assign(Object.create({SubscriptionEndDate:'2020-01-01',ApplicationStartDate:null,ApplicationEndDate:null}),{type:'settings',program:'technological',dates:[]})
+ ]) {
+  const changed=applyAction(plan,state,input,now);
+  for(const field of ['SubscriptionEndDate','ApplicationStartDate','ApplicationEndDate'])assert.equal(changed[field],state[field]);
+ }
+ const cleared=applyAction(plan,state,{type:'settings',program:'technological',SubscriptionEndDate:null,ApplicationStartDate:null,ApplicationEndDate:null},now);
+ const unchanged=applyAction(plan,cleared,{type:'settings',program:'technological',dates:[]},now);
+ assert.equal(importantDates(plan,unchanged,now).subscriptionEndDay,null);
+ assert.equal(importantDates(plan,unchanged,now).applicationStatus,null);
+});
+
+test('deadline edits reject malformed dates and inconsistent application windows atomically',()=>{
+ const now=new Date('2026-10-09T12:00Z'),state=fresh(),before=structuredClone(state);
+ for(const field of ['SubscriptionEndDate','ApplicationStartDate','ApplicationEndDate']) {
+  for(const value of ['2026-02-31','2026-11-5','2019-12-31','2101-01-01','2026-11-05T00:00:00Z','',undefined,42,false,{}]) {
+   assert.throws(()=>applyAction(plan,state,{type:'settings',program:'technological',dates:[{id:'qa',value:'2026-10-20'}],[field]:value},now),/корректную дату/);
+   assert.deepEqual(state,before);
+   assert.throws(()=>validateState(plan,{...state,[field]:value}),/корректную дату/);
+  }
+ }
+ for(const input of [
+  {ApplicationStartDate:null},
+  {ApplicationEndDate:null},
+  {ApplicationStartDate:'2026-11-10',ApplicationEndDate:'2026-11-09'}
+ ]) {
+  assert.throws(()=>applyAction(plan,state,{type:'settings',program:'technological',...input},now),/обе даты|позже окончания/);
+  assert.throws(()=>validateState(plan,{...state,...input}),/обе даты|позже окончания/);
+  assert.deepEqual(state,before);
+ }
+ assert.equal(applyAction(plan,state,{type:'settings',program:'technological',SubscriptionEndDate:'2020-02-29',ApplicationStartDate:'2100-12-31',ApplicationEndDate:'2100-12-31'},now).SubscriptionEndDate,'2020-02-29');
+});
+
+test('important dates follow inclusive application days and subscription expiry in UTC+5',()=>{
+ const state=fresh();
+ const cases=[
+  ['2026-10-31T18:59:59.999Z','upcoming',1,5],
+  ['2026-10-31T19:00:00.000Z','open',9,4],
+  ['2026-11-04T19:00:00.000Z','open',5,0],
+  ['2026-11-05T18:59:59.999Z','open',5,0],
+  ['2026-11-05T19:00:00.000Z','open',4,-1],
+  ['2026-11-09T18:59:59.999Z','open',1,-4],
+  ['2026-11-09T19:00:00.000Z','closed',0,-5]
+ ];
+ for(const [time,status,remaining,subscription] of cases) {
+  const dates=importantDates(plan,state,new Date(time));
+  assert.equal(dates.applicationStatus,status,time);
+  assert.equal(dates.applicationRemainingDays,remaining,time);
+  assert.equal(dates.subscriptionRemainingDays,subscription,time);
+ }
+ const oneDay={...state,ApplicationStartDate:'2026-11-01',ApplicationEndDate:'2026-11-01'};
+ assert.equal(importantDates(plan,oneDay,new Date('2026-10-31T19:00Z')).applicationRemainingDays,1);
+ assert.equal(importantDates(plan,oneDay,new Date('2026-11-01T19:00Z')).applicationStatus,'closed');
 });
